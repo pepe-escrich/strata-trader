@@ -94,6 +94,30 @@ cd frontend
 npm run test
 ```
 
+## 🚀 Deployment
+
+### Quick Deploy
+
+**Backend (Render):**
+1. Push código a GitHub
+2. Conecta con Render
+3. Configura variables de entorno
+4. Deploy automático
+
+**Frontend (Vercel):**
+1. Actualiza API URL en `frontend/src/environments/environment.production.ts`
+2. Push a GitHub
+3. Conecta con Vercel
+4. Deploy automático
+
+**Guía Completa:** Ver [DEPLOYMENT.md](DEPLOYMENT.md) para instrucciones detalladas paso a paso.
+
+### Verificar antes de desplegar
+
+```bash
+./scripts/verify-deployment.sh
+```
+
 ## 📝 Licencia
 
 Privado - Todos los derechos reservados

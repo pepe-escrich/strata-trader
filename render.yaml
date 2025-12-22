@@ -1,0 +1,52 @@
+services:
+  # NestJS Backend API
+  - type: web
+    name: strata-trader-api
+    env: node
+    region: frankfurt  # Cambia según tu preferencia
+    plan: free  # starter para producción
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: API_PREFIX
+        value: api
+      - key: BINGX_API_KEY
+        sync: false  # Se configura manualmente en Render
+      - key: BINGX_SECRET_KEY
+        sync: false
+      - key: BINGX_BASE_URL
+        value: https://open-api.bingx.com
+      - key: BINGX_TESTNET
+        value: true
+      - key: MONGODB_URI
+        sync: false  # Opcional: configurar si usas MongoDB
+      - key: DEFAULT_RISK_PERCENT
+        value: 1
+      - key: MAX_LEVERAGE
+        value: 20
+      - key: MAX_OPEN_POSITIONS
+        value: 3
+      - key: MAX_DAILY_LOSS_PERCENT
+        value: 5
+      - key: MARKET_UPDATE_INTERVAL
+        value: 5000
+      - key: CANDLE_CACHE_TTL
+        value: 300000
+      - key: LEVELS_UPDATE_INTERVAL
+        value: 60000
+      - key: MIN_LEVEL_STRENGTH
+        value: 40
+      - key: MAX_LEVEL_DISTANCE_PERCENT
+        value: 0.5
+      - key: DIV_SCAN_INTERVAL
+        value: 30000
+      - key: MIN_DIVERGENCE_SCORE
+        value: 50
+      - key: REQUIRED_INDICATORS
+        value: 1
+    healthCheckPath: /api
+    autoDeploy: true

@@ -8,9 +8,41 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Enable CORS for frontend communication
+  const allowedOrigins = [
+    'http://localhost:4200',
+    'http://localhost:3000',
+    // Add your Vercel deployment URL here after deployment
+    // Example: 'https://strata-trader.vercel.app'
+  ];
+
+  // In production, allow Vercel deployment
+  if (process.env.NODE_ENV === 'production') {
+    // Allow any Vercel deployment
+    allowedOrigins.push(/\.vercel\.app$/);
+  }
+
   app.enableCors({
-    origin: ['http://localhost:4200', 'http://localhost:3000'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is allowed
+      const isAllowed = allowedOrigins.some(allowed => {
+        if (allowed instanceof RegExp) {
+          return allowed.test(origin);
+        }
+        return allowed === origin;
+      });
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
   // Global validation pipe
