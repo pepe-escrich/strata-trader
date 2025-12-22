@@ -1,0 +1,68 @@
+<div class="dashboard-container p-4">
+  <p-card header="Market Overview" class="mb-4">
+    <div class="flex justify-content-between align-items-center mb-3">
+      <h2 class="m-0">Live Crypto Prices</h2>
+      <p-button
+        icon="pi pi-refresh"
+        label="Refresh"
+        (onClick)="loadTickers()"
+        [loading]="loading"
+        severity="secondary"
+        [outlined]="true"
+      ></p-button>
+    </div>
+
+    <p-table
+      [value]="tickers"
+      [loading]="loading"
+      styleClass="p-datatable-striped"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Symbol</th>
+          <th class="text-right">Price (USDT)</th>
+          <th class="text-right">24h Change</th>
+          <th class="text-right">24h High</th>
+          <th class="text-right">24h Low</th>
+          <th class="text-right">24h Volume</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-ticker>
+        <tr>
+          <td>
+            <strong>{{ ticker.symbol }}</strong>
+          </td>
+          <td class="text-right">
+            <span class="font-semibold">
+              {{ formatNumber(ticker.price, 2) }}
+            </span>
+          </td>
+          <td class="text-right">
+            <p-tag
+              [severity]="getPriceChangeColor(ticker.priceChangePercent)"
+              [value]="formatNumber(ticker.priceChangePercent, 2) + '%'"
+            ></p-tag>
+          </td>
+          <td class="text-right">{{ formatNumber(ticker.high24h, 2) }}</td>
+          <td class="text-right">{{ formatNumber(ticker.low24h, 2) }}</td>
+          <td class="text-right">{{ formatVolume(ticker.volume24h) }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center">
+            <div *ngIf="error" class="text-red-500">
+              <i class="pi pi-exclamation-triangle mr-2"></i>
+              {{ error }}
+            </div>
+            <div *ngIf="!error && !loading">
+              <i class="pi pi-info-circle mr-2"></i>
+              No market data available
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+</div>
