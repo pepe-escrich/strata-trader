@@ -1,12 +1,12 @@
 <div class="min-h-screen flex flex-col bg-surface-ground">
-  <!-- Modern Header with Toolbar -->
+  <!-- Mobile-Optimized Header with Toolbar -->
   <p-toolbar class="border-b border-surface">
     <ng-template pTemplate="start">
-      <div class="flex items-center gap-4">
-        <i class="pi pi-chart-bar text-3xl text-primary"></i>
+      <div class="flex items-center gap-2 md:gap-4">
+        <i class="pi pi-chart-bar text-2xl md:text-3xl text-primary"></i>
         <div>
-          <h1 class="text-2xl font-bold m-0 text-surface-900 dark:text-surface-0">{{ title() }}</h1>
-          <p class="text-sm m-0 text-muted-color">Advanced Crypto Trading Bot</p>
+          <h1 class="text-lg md:text-2xl font-bold m-0 text-surface-900 dark:text-surface-0">{{ title() }}</h1>
+          <p class="text-xs md:text-sm m-0 text-muted-color hidden sm:block">Advanced Crypto Trading Bot</p>
         </div>
       </div>
     </ng-template>
@@ -22,6 +22,16 @@
           (onClick)="toggleDarkMode()"
           [pTooltip]="darkMode() ? 'Switch to light mode' : 'Switch to dark mode'"
           tooltipPosition="bottom"
+          class="hidden sm:inline-flex"
+        />
+        <!-- Mobile: Icon only -->
+        <p-button
+          [text]="true"
+          [rounded]="true"
+          [icon]="darkMode() ? 'pi pi-sun' : 'pi pi-moon'"
+          severity="secondary"
+          (onClick)="toggleDarkMode()"
+          class="inline-flex sm:hidden"
         />
       </div>
     </ng-template>
@@ -31,14 +41,15 @@
   <p-menubar [model]="menuItems" class="border-none"></p-menubar>
 
   <!-- Main Content -->
-  <main class="flex-1 p-4">
+  <main class="flex-1 p-2 sm:p-4">
     <div class="max-w-[1400px] mx-auto">
       <router-outlet></router-outlet>
     </div>
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-surface p-4 text-center text-muted-color text-sm">
-    <p>Strata Trader &copy; 2025 | Powered by PrimeNG & Tailwind CSS</p>
+  <footer class="border-t border-surface p-3 md:p-4 text-center text-muted-color text-xs md:text-sm">
+    <p class="hidden sm:block">Strata Trader &copy; 2025 | Powered by PrimeNG & Tailwind CSS</p>
+    <p class="sm:hidden">Strata Trader &copy; 2025</p>
   </footer>
 </div>

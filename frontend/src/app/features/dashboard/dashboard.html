@@ -1,44 +1,44 @@
 <div class="dashboard-container">
-  <!-- Page Header -->
-  <div class="mb-6">
-    <div class="flex justify-between items-center">
+  <!-- Mobile-Optimized Page Header -->
+  <div class="mb-4 md:mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
       <div>
-        <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-2">
+        <h1 class="text-2xl md:text-3xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-1 md:mb-2">
           <i class="pi pi-chart-line mr-2 text-primary"></i>
-          Market Overview
+          <span class="hidden sm:inline">Market Overview</span>
+          <span class="sm:hidden">Markets</span>
         </h1>
-        <p class="text-muted-color">Real-time cryptocurrency market data and nearby support/resistance levels</p>
+        <p class="text-xs md:text-sm text-muted-color">Real-time cryptocurrency data</p>
       </div>
       <p-button
         icon="pi pi-refresh"
-        label="Refresh All"
+        [label]="isDesktop() ? 'Refresh All' : ''"
         (onClick)="loadAll()"
         [loading]="loading || levelsLoading"
         severity="primary"
         [raised]="true"
+        size="small"
       />
     </div>
   </div>
 
-  <!-- Market Stats Cards -->
-  <div class="grid mb-4">
-    <div class="col-12 lg:col-3 md:col-6" *ngFor="let ticker of topTickers">
-      <p-card class="shadow-sm border border-surface hover:shadow-md transition-shadow">
-        <div class="flex justify-between items-start">
-          <div class="flex-1">
-            <div class="text-muted-color text-sm mb-1">{{ ticker.symbol }}</div>
-            <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mb-2">
-              ${{ formatNumber(ticker.price, 2) }}
-            </div>
+  <!-- Mobile-Optimized Market Stats Cards -->
+  <div class="grid mb-3 md:mb-4">
+    <div class="col-6 lg:col-3" *ngFor="let ticker of topTickers">
+      <p-card class="shadow-sm border border-surface hover:shadow-md transition-shadow h-full">
+        <div class="flex flex-col">
+          <div class="text-muted-color text-xs md:text-sm mb-1 truncate">{{ ticker.symbol }}</div>
+          <div class="text-lg md:text-2xl font-bold text-surface-900 dark:text-surface-0 mb-2">
+            ${{ formatNumber(ticker.price, ticker.price > 1000 ? 0 : 2) }}
+          </div>
+          <div class="flex justify-between items-center">
             <p-tag
               [severity]="getPriceChangeColor(ticker.priceChangePercent)"
               [value]="(ticker.priceChangePercent >= 0 ? '+' : '') + formatNumber(ticker.priceChangePercent, 2) + '%'"
               class="text-xs"
             />
-          </div>
-          <div class="text-right">
             <i
-              class="text-3xl"
+              class="text-xl md:text-2xl"
               [class.pi-arrow-up]="ticker.priceChangePercent >= 0"
               [class.pi-arrow-down]="ticker.priceChangePercent < 0"
               [class.text-green-500]="ticker.priceChangePercent >= 0"
@@ -50,17 +50,20 @@
     </div>
   </div>
 
-  <!-- Detailed Price Table -->
-  <p-card class="mb-4 shadow-sm">
+  <!-- Mobile-Optimized Price Table -->
+  <p-card class="mb-3 md:mb-4 shadow-sm">
     <ng-template pTemplate="header">
-      <div class="flex justify-between items-center p-4 border-b border-surface">
+      <div class="flex justify-between items-center p-3 md:p-4 border-b border-surface">
         <div class="flex items-center gap-2">
-          <i class="pi pi-list text-xl text-primary"></i>
-          <span class="text-xl font-semibold text-surface-900 dark:text-surface-0">Live Crypto Prices</span>
+          <i class="pi pi-list text-lg md:text-xl text-primary"></i>
+          <span class="text-base md:text-xl font-semibold text-surface-900 dark:text-surface-0">
+            <span class="hidden sm:inline">Live Crypto Prices</span>
+            <span class="sm:hidden">Prices</span>
+          </span>
         </div>
         <p-button
           icon="pi pi-refresh"
-          label="Refresh"
+          [label]="isDesktop() ? 'Refresh' : ''"
           (onClick)="loadTickers()"
           [loading]="loading"
           severity="secondary"
@@ -70,10 +73,41 @@
       </div>
     </ng-template>
 
+    <!-- Mobile: Card View -->
+    <div class="block md:hidden">
+      <div *ngFor="let ticker of tickers" class="p-3 border-b border-surface last:border-b-0 hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <strong class="text-base text-surface-900 dark:text-surface-0">{{ ticker.symbol }}</strong>
+            <div class="text-xs text-muted-color mt-1">24h Vol: {{ formatVolume(ticker.volume24h) }}</div>
+          </div>
+          <p-tag
+            [severity]="getPriceChangeColor(ticker.priceChangePercent)"
+            [value]="(ticker.priceChangePercent >= 0 ? '+' : '') + formatNumber(ticker.priceChangePercent, 2) + '%'"
+          />
+        </div>
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="text-xl font-bold text-surface-900 dark:text-surface-0 mb-1">
+              ${{ formatNumber(ticker.price, 2) }}
+            </div>
+            <div class="text-xs text-muted-color">
+              H: ${{ formatNumber(ticker.high24h, 2) }} / L: ${{ formatNumber(ticker.low24h, 2) }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!loading && tickers.length === 0" class="p-8 text-center text-muted-color">
+        <i class="pi pi-info-circle text-3xl mb-2"></i>
+        <p>No market data available</p>
+      </div>
+    </div>
+
+    <!-- Desktop: Table View -->
     <p-table
       [value]="tickers"
       [loading]="loading"
-      styleClass="p-datatable-sm"
+      styleClass="p-datatable-sm hidden md:table"
       responsiveLayout="scroll"
       [paginator]="true"
       [rows]="10"
@@ -128,19 +162,22 @@
     </p-table>
   </p-card>
 
-  <!-- Nearby Levels Card -->
+  <!-- Mobile-Optimized Nearby Levels Card -->
   <p-card class="shadow-sm">
     <ng-template pTemplate="header">
-      <div class="flex justify-between items-center p-4 border-b border-surface">
+      <div class="flex justify-between items-center p-3 md:p-4 border-b border-surface">
         <div class="flex items-center gap-2">
-          <i class="pi pi-chart-bar text-xl text-primary"></i>
-          <span class="text-xl font-semibold text-surface-900 dark:text-surface-0">BTC-USDT - Nearby Support & Resistance</span>
+          <i class="pi pi-chart-bar text-lg md:text-xl text-primary"></i>
+          <span class="text-base md:text-xl font-semibold text-surface-900 dark:text-surface-0">
+            <span class="hidden sm:inline">BTC-USDT - Nearby Support & Resistance</span>
+            <span class="sm:hidden">BTC Levels</span>
+          </span>
         </div>
         <a
           routerLink="/levels"
-          class="text-primary hover:text-primary-600 font-medium text-sm flex items-center gap-1"
+          class="text-primary hover:text-primary-600 font-medium text-xs md:text-sm flex items-center gap-1"
         >
-          View All Levels
+          <span class="hidden sm:inline">View All</span>
           <i class="pi pi-arrow-right"></i>
         </a>
       </div>
@@ -150,23 +187,23 @@
       <div class="grid">
         <div
           *ngFor="let level of nearbyLevels"
-          class="col-12 md:col-6 lg:col-4"
+          class="col-12 sm:col-6 lg:col-4"
         >
           <div
-            class="p-4 border border-surface rounded-lg hover:shadow-md transition-shadow"
+            class="p-3 md:p-4 border border-surface rounded-lg hover:shadow-md transition-shadow"
             [class.bg-green-50]="level.type === 'SUPPORT' && !isDarkMode()"
             [class.bg-red-50]="level.type === 'RESISTANCE' && !isDarkMode()"
             [class.dark:bg-green-950]="level.type === 'SUPPORT' && isDarkMode()"
             [class.dark:bg-red-950]="level.type === 'RESISTANCE' && isDarkMode()"
           >
-            <div class="flex justify-between items-start mb-3">
+            <div class="flex justify-between items-start mb-2 md:mb-3">
               <p-tag
                 [severity]="getTypeColor(level.type)"
                 [value]="level.type"
                 [rounded]="true"
               />
               <span
-                class="text-sm font-semibold px-2 py-1 rounded"
+                class="text-xs md:text-sm font-semibold px-2 py-1 rounded"
                 [class.text-green-600]="level.price < getCurrentPrice()"
                 [class.bg-green-100]="level.price < getCurrentPrice()"
                 [class.text-red-600]="level.price > getCurrentPrice()"
@@ -175,24 +212,24 @@
                 {{ getDistanceFromPrice(level) }}
               </span>
             </div>
-            <div class="text-3xl font-bold mb-3 text-surface-900 dark:text-surface-0">
+            <div class="text-2xl md:text-3xl font-bold mb-2 md:mb-3 text-surface-900 dark:text-surface-0">
               ${{ formatNumber(level.price, 2) }}
             </div>
-            <div class="space-y-2">
-              <div class="flex justify-between items-center">
-                <span class="text-muted-color text-sm">Strength:</span>
+            <div class="space-y-1 md:space-y-2">
+              <div class="flex justify-between items-center text-xs md:text-sm">
+                <span class="text-muted-color">Strength:</span>
                 <p-tag
                   [severity]="getStrengthColor(level.strength)"
                   [value]="level.strength.toString()"
                   [rounded]="true"
                 />
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-muted-color text-sm">Touches:</span>
+              <div class="flex justify-between items-center text-xs md:text-sm">
+                <span class="text-muted-color">Touches:</span>
                 <span class="font-semibold text-surface-900 dark:text-surface-0">{{ level.touches }}</span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-muted-color text-sm">Method:</span>
+              <div class="flex justify-between items-center text-xs md:text-sm">
+                <span class="text-muted-color">Method:</span>
                 <span class="text-xs font-medium px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">{{ level.method }}</span>
               </div>
             </div>
@@ -203,18 +240,18 @@
 
     <div
       *ngIf="levelsLoading"
-      class="text-center p-8"
+      class="text-center p-6 md:p-8"
     >
-      <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
-      <p class="text-muted-color">Loading nearby levels...</p>
+      <i class="pi pi-spin pi-spinner text-3xl md:text-4xl text-primary mb-3"></i>
+      <p class="text-sm md:text-base text-muted-color">Loading nearby levels...</p>
     </div>
 
     <div
       *ngIf="!levelsLoading && nearbyLevels.length === 0"
-      class="text-center p-8"
+      class="text-center p-6 md:p-8"
     >
-      <i class="pi pi-info-circle text-4xl text-muted-color mb-3"></i>
-      <p class="text-muted-color">No nearby levels found within 0.5% of current price</p>
+      <i class="pi pi-info-circle text-3xl md:text-4xl text-muted-color mb-3"></i>
+      <p class="text-sm md:text-base text-muted-color">No nearby levels found within 0.5% of current price</p>
     </div>
   </p-card>
 </div>
