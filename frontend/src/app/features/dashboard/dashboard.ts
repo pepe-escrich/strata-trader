@@ -23,6 +23,11 @@ export class Dashboard implements OnInit, OnDestroy {
   error: string | null = null;
   private refreshInterval: any;
 
+  // Top 4 tickers for stat cards
+  get topTickers(): Ticker[] {
+    return this.tickers.slice(0, 4);
+  }
+
   // PrimeNG table configuration
   columns = [
     { field: 'symbol', header: 'Symbol' },
@@ -128,5 +133,16 @@ export class Dashboard implements OnInit, OnDestroy {
     const distance = ((level.price - currentPrice) / currentPrice) * 100;
     const sign = distance > 0 ? '+' : '';
     return `${sign}${distance.toFixed(2)}%`;
+  }
+
+  async loadAll() {
+    await Promise.all([
+      this.loadTickers(),
+      this.loadNearbyLevels()
+    ]);
+  }
+
+  isDarkMode(): boolean {
+    return document.documentElement.classList.contains('dark-mode');
   }
 }

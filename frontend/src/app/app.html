@@ -1,17 +1,44 @@
-<div class="app-container">
-  <header class="app-header">
-    <div class="bg-primary text-white p-3">
-      <div class="container mx-auto">
-        <h1 class="text-2xl font-bold m-0">{{ title() }}</h1>
-        <p class="text-sm m-0">Crypto Trading Bot</p>
+<div class="min-h-screen flex flex-col bg-surface-ground">
+  <!-- Modern Header with Toolbar -->
+  <p-toolbar class="border-b border-surface">
+    <ng-template pTemplate="start">
+      <div class="flex items-center gap-4">
+        <i class="pi pi-chart-bar text-3xl text-primary"></i>
+        <div>
+          <h1 class="text-2xl font-bold m-0 text-surface-900 dark:text-surface-0">{{ title() }}</h1>
+          <p class="text-sm m-0 text-muted-color">Advanced Crypto Trading Bot</p>
+        </div>
       </div>
-    </div>
-    <nav class="app-navigation">
-      <p-menubar [model]="menuItems"></p-menubar>
-    </nav>
-  </header>
+    </ng-template>
 
-  <main class="app-content">
-    <router-outlet></router-outlet>
+    <ng-template pTemplate="end">
+      <div class="flex items-center gap-2">
+        <p-button
+          [text]="true"
+          [rounded]="true"
+          [icon]="darkMode() ? 'pi pi-sun' : 'pi pi-moon'"
+          [label]="darkMode() ? 'Light' : 'Dark'"
+          severity="secondary"
+          (onClick)="toggleDarkMode()"
+          [pTooltip]="darkMode() ? 'Switch to light mode' : 'Switch to dark mode'"
+          tooltipPosition="bottom"
+        />
+      </div>
+    </ng-template>
+  </p-toolbar>
+
+  <!-- Navigation Menu -->
+  <p-menubar [model]="menuItems" class="border-none"></p-menubar>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-4">
+    <div class="max-w-[1400px] mx-auto">
+      <router-outlet></router-outlet>
+    </div>
   </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-surface p-4 text-center text-muted-color text-sm">
+    <p>Strata Trader &copy; 2025 | Powered by PrimeNG & Tailwind CSS</p>
+  </footer>
 </div>

@@ -1,9 +1,16 @@
 /* You can add global styles to this file, and also import other style files */
 
-/* Tailwind CSS */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind CSS with PrimeNG integration */
+@layer tailwind-base, primeng, tailwind-utilities;
+
+@layer tailwind-base {
+  @tailwind base;
+}
+
+@layer tailwind-utilities {
+  @tailwind components;
+  @tailwind utilities;
+}
 
 /* Global Styles */
 * {
@@ -14,15 +21,13 @@
 
 body {
   font-family: var(--font-family);
-  background-color: var(--surface-ground);
+  background: var(--surface-ground);
   color: var(--text-color);
 }
 
-/* Utility Classes */
-.text-green-500 {
-  color: #22c55e;
-}
-
-.text-red-500 {
-  color: #ef4444;
+/* Smooth transitions for theme switching */
+.smooth-transition * {
+  transition-property: background-color, border-color, color;
+  transition-timing-function: ease-in-out;
+  transition-duration: 150ms;
 }

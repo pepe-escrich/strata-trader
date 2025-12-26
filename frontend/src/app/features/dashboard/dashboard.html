@@ -1,22 +1,84 @@
-<div class="dashboard-container p-4">
-  <p-card header="Market Overview" class="mb-4">
-    <div class="flex justify-content-between align-items-center mb-3">
-      <h2 class="m-0">Live Crypto Prices</h2>
+<div class="dashboard-container">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-2">
+          <i class="pi pi-chart-line mr-2 text-primary"></i>
+          Market Overview
+        </h1>
+        <p class="text-muted-color">Real-time cryptocurrency market data and nearby support/resistance levels</p>
+      </div>
       <p-button
         icon="pi pi-refresh"
-        label="Refresh"
-        (onClick)="loadTickers()"
-        [loading]="loading"
-        severity="secondary"
-        [outlined]="true"
-      ></p-button>
+        label="Refresh All"
+        (onClick)="loadAll()"
+        [loading]="loading || levelsLoading"
+        severity="primary"
+        [raised]="true"
+      />
     </div>
+  </div>
+
+  <!-- Market Stats Cards -->
+  <div class="grid mb-4">
+    <div class="col-12 lg:col-3 md:col-6" *ngFor="let ticker of topTickers">
+      <p-card class="shadow-sm border border-surface hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <div class="text-muted-color text-sm mb-1">{{ ticker.symbol }}</div>
+            <div class="text-2xl font-bold text-surface-900 dark:text-surface-0 mb-2">
+              ${{ formatNumber(ticker.price, 2) }}
+            </div>
+            <p-tag
+              [severity]="getPriceChangeColor(ticker.priceChangePercent)"
+              [value]="(ticker.priceChangePercent >= 0 ? '+' : '') + formatNumber(ticker.priceChangePercent, 2) + '%'"
+              class="text-xs"
+            />
+          </div>
+          <div class="text-right">
+            <i
+              class="text-3xl"
+              [class.pi-arrow-up]="ticker.priceChangePercent >= 0"
+              [class.pi-arrow-down]="ticker.priceChangePercent < 0"
+              [class.text-green-500]="ticker.priceChangePercent >= 0"
+              [class.text-red-500]="ticker.priceChangePercent < 0"
+            ></i>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Detailed Price Table -->
+  <p-card class="mb-4 shadow-sm">
+    <ng-template pTemplate="header">
+      <div class="flex justify-between items-center p-4 border-b border-surface">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-list text-xl text-primary"></i>
+          <span class="text-xl font-semibold text-surface-900 dark:text-surface-0">Live Crypto Prices</span>
+        </div>
+        <p-button
+          icon="pi pi-refresh"
+          label="Refresh"
+          (onClick)="loadTickers()"
+          [loading]="loading"
+          severity="secondary"
+          [text]="true"
+          size="small"
+        />
+      </div>
+    </ng-template>
 
     <p-table
       [value]="tickers"
       [loading]="loading"
-      styleClass="p-datatable-striped"
+      styleClass="p-datatable-sm"
       responsiveLayout="scroll"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} symbols"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -29,36 +91,36 @@
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-ticker>
-        <tr>
+        <tr class="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
           <td>
-            <strong>{{ ticker.symbol }}</strong>
+            <strong class="text-surface-900 dark:text-surface-0">{{ ticker.symbol }}</strong>
           </td>
           <td class="text-right">
-            <span class="font-semibold">
-              {{ formatNumber(ticker.price, 2) }}
+            <span class="font-semibold text-surface-900 dark:text-surface-0">
+              ${{ formatNumber(ticker.price, 2) }}
             </span>
           </td>
           <td class="text-right">
             <p-tag
               [severity]="getPriceChangeColor(ticker.priceChangePercent)"
-              [value]="formatNumber(ticker.priceChangePercent, 2) + '%'"
-            ></p-tag>
+              [value]="(ticker.priceChangePercent >= 0 ? '+' : '') + formatNumber(ticker.priceChangePercent, 2) + '%'"
+            />
           </td>
-          <td class="text-right">{{ formatNumber(ticker.high24h, 2) }}</td>
-          <td class="text-right">{{ formatNumber(ticker.low24h, 2) }}</td>
-          <td class="text-right">{{ formatVolume(ticker.volume24h) }}</td>
+          <td class="text-right text-muted-color">${{ formatNumber(ticker.high24h, 2) }}</td>
+          <td class="text-right text-muted-color">${{ formatNumber(ticker.low24h, 2) }}</td>
+          <td class="text-right text-muted-color">{{ formatVolume(ticker.volume24h) }}</td>
         </tr>
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="6" class="text-center">
-            <div *ngIf="error" class="text-red-500">
-              <i class="pi pi-exclamation-triangle mr-2"></i>
-              {{ error }}
+          <td colspan="6" class="text-center p-5">
+            <div *ngIf="error" class="text-red-500 flex items-center justify-center gap-2">
+              <i class="pi pi-exclamation-triangle text-xl"></i>
+              <span>{{ error }}</span>
             </div>
-            <div *ngIf="!error && !loading">
-              <i class="pi pi-info-circle mr-2"></i>
-              No market data available
+            <div *ngIf="!error && !loading" class="text-muted-color flex items-center justify-center gap-2">
+              <i class="pi pi-info-circle text-xl"></i>
+              <span>No market data available</span>
             </div>
           </td>
         </tr>
@@ -67,12 +129,19 @@
   </p-card>
 
   <!-- Nearby Levels Card -->
-  <p-card header="BTC-USDT - Nearby Support & Resistance" class="mb-4">
+  <p-card class="shadow-sm">
     <ng-template pTemplate="header">
-      <div class="flex justify-content-between align-items-center p-3">
-        <span class="font-bold">BTC-USDT - Nearby Support & Resistance</span>
-        <a routerLink="/levels" class="text-primary text-sm">
-          View All Levels <i class="pi pi-arrow-right ml-1"></i>
+      <div class="flex justify-between items-center p-4 border-b border-surface">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-chart-bar text-xl text-primary"></i>
+          <span class="text-xl font-semibold text-surface-900 dark:text-surface-0">BTC-USDT - Nearby Support & Resistance</span>
+        </div>
+        <a
+          routerLink="/levels"
+          class="text-primary hover:text-primary-600 font-medium text-sm flex items-center gap-1"
+        >
+          View All Levels
+          <i class="pi pi-arrow-right"></i>
         </a>
       </div>
     </ng-template>
@@ -84,36 +153,48 @@
           class="col-12 md:col-6 lg:col-4"
         >
           <div
-            class="p-3 border-round"
-            [class.bg-green-50]="level.type === 'SUPPORT'"
-            [class.bg-red-50]="level.type === 'RESISTANCE'"
+            class="p-4 border border-surface rounded-lg hover:shadow-md transition-shadow"
+            [class.bg-green-50]="level.type === 'SUPPORT' && !isDarkMode()"
+            [class.bg-red-50]="level.type === 'RESISTANCE' && !isDarkMode()"
+            [class.dark:bg-green-950]="level.type === 'SUPPORT' && isDarkMode()"
+            [class.dark:bg-red-950]="level.type === 'RESISTANCE' && isDarkMode()"
           >
-            <div class="flex justify-content-between align-items-start mb-2">
+            <div class="flex justify-between items-start mb-3">
               <p-tag
                 [severity]="getTypeColor(level.type)"
                 [value]="level.type"
-              ></p-tag>
+                [rounded]="true"
+              />
               <span
-                class="text-sm font-semibold"
+                class="text-sm font-semibold px-2 py-1 rounded"
                 [class.text-green-600]="level.price < getCurrentPrice()"
+                [class.bg-green-100]="level.price < getCurrentPrice()"
                 [class.text-red-600]="level.price > getCurrentPrice()"
+                [class.bg-red-100]="level.price > getCurrentPrice()"
               >
                 {{ getDistanceFromPrice(level) }}
               </span>
             </div>
-            <div class="text-2xl font-bold mb-1">
-              {{ formatNumber(level.price, 2) }}
+            <div class="text-3xl font-bold mb-3 text-surface-900 dark:text-surface-0">
+              ${{ formatNumber(level.price, 2) }}
             </div>
-            <div class="flex justify-content-between align-items-center text-sm">
-              <span class="text-600">Strength:</span>
-              <p-tag
-                [severity]="getStrengthColor(level.strength)"
-                [value]="level.strength.toString()"
-              ></p-tag>
-            </div>
-            <div class="flex justify-content-between align-items-center text-sm mt-1">
-              <span class="text-600">Touches:</span>
-              <span class="font-semibold">{{ level.touches }}</span>
+            <div class="space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-muted-color text-sm">Strength:</span>
+                <p-tag
+                  [severity]="getStrengthColor(level.strength)"
+                  [value]="level.strength.toString()"
+                  [rounded]="true"
+                />
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-muted-color text-sm">Touches:</span>
+                <span class="font-semibold text-surface-900 dark:text-surface-0">{{ level.touches }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-muted-color text-sm">Method:</span>
+                <span class="text-xs font-medium px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">{{ level.method }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -122,18 +203,18 @@
 
     <div
       *ngIf="levelsLoading"
-      class="text-center p-5 text-600"
+      class="text-center p-8"
     >
-      <i class="pi pi-spin pi-spinner mr-2"></i>
-      Loading nearby levels...
+      <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
+      <p class="text-muted-color">Loading nearby levels...</p>
     </div>
 
     <div
       *ngIf="!levelsLoading && nearbyLevels.length === 0"
-      class="text-center p-5 text-600"
+      class="text-center p-8"
     >
-      <i class="pi pi-info-circle mr-2"></i>
-      No nearby levels found
+      <i class="pi pi-info-circle text-4xl text-muted-color mb-3"></i>
+      <p class="text-muted-color">No nearby levels found within 0.5% of current price</p>
     </div>
   </p-card>
 </div>
