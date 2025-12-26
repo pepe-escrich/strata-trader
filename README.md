@@ -30,13 +30,27 @@ El proyecto está dividido en dos módulos principales:
 
 ## 📋 Funcionalidades
 
-- ✅ Detección de rangos soporte/resistencia por moneda
-- ✅ Detección de divergencias alcistas/bajistas
-- ✅ Backtesting de estrategias
-- ✅ Visor de datos (velas, volumen, rangos)
-- ✅ Creador de órdenes
-- ✅ Sistema de alertas
-- ✅ Historial de operaciones
+### ✅ Fase 1: Infraestructura Base (Completa)
+- ✅ Integración con BingX API
+- ✅ Market data service con caché inteligente
+- ✅ Dashboard con precios en vivo
+- ✅ REST API endpoints para datos de mercado
+
+### ✅ Fase 2: Soporte y Resistencia (Completa)
+- ✅ Calculador de Pivot Points (Standard, Fibonacci, Camarilla)
+- ✅ Calculador de Swing Levels (highs/lows con agrupación)
+- ✅ Calculador de Volume Profile (POC, VAH, VAL)
+- ✅ Sistema de scoring de fortaleza (0-100)
+- ✅ Detección de confluencia entre métodos
+- ✅ API REST completa con 6 endpoints
+- ✅ Viewer interactivo con filtros
+- ✅ Análisis multi-timeframe
+
+### 🚧 Próximas Fases
+- ⏳ Fase 3: Detección de divergencias (RSI, MACD)
+- ⏳ Fase 4: Gestión de órdenes con risk management
+- ⏳ Fase 5: Sistema de alertas
+- ⏳ Fase 6: Backtesting de estrategias
 
 ## 🚀 Inicio Rápido
 
@@ -45,31 +59,76 @@ El proyecto está dividido en dos módulos principales:
 - npm >= 9.x
 - MongoDB (opcional, para persistencia)
 
-### Backend
+### Instalación Completa
+
 ```bash
+# Clonar repositorio
+git clone <repo-url>
+cd strata-trader
+
+# Backend
 cd backend
+cp .env.example .env
+# Configurar BINGX_API_KEY y BINGX_SECRET_KEY en .env
 npm install
 npm run start:dev
-```
+# Backend corriendo en http://localhost:3000
 
-### Frontend
-```bash
-cd frontend
+# Frontend (en otra terminal)
+cd ../frontend
 npm install
 npm start
+# Frontend corriendo en http://localhost:4200
 ```
+
+### Acceder a la Aplicación
+
+- **Dashboard**: http://localhost:4200/dashboard
+  - Precios en vivo de criptomonedas
+  - Niveles S/R cercanos de BTC-USDT
+
+- **Levels Viewer**: http://localhost:4200/levels
+  - Vista completa de niveles S/R
+  - Filtros por símbolo, timeframe y fortaleza
+  - Análisis de fortaleza por categorías
+
+### API Backend
+
+El backend expone una API REST en `http://localhost:3000/api`:
+
+```bash
+# Obtener niveles S/R de BTC-USDT
+curl http://localhost:3000/api/levels/BTC-USDT?timeframe=1h
+
+# Ver todos los endpoints disponibles
+curl http://localhost:3000/api/market/symbols
+```
+
+Ver [documentación completa de la API](doc/backend/SUPPORT_RESISTANCE.md#api-endpoints) para todos los endpoints.
 
 ## 📚 Documentación
 
 La documentación completa del proyecto se encuentra en el directorio `/doc`:
 
+### Documentación General
 - [Visión General](doc/OVERVIEW.md)
 - [Arquitectura](doc/ARCHITECTURE.md)
 - [Funcionalidades](doc/FEATURES.md)
 - [Roadmap](doc/ROADMAP.md)
-- [Módulos Backend](doc/backend/MODULES.md)
-- [Componentes Frontend](doc/frontend/COMPONENTS.md)
-- [Estrategia de Trading](doc/trading/STRATEGY.md)
+- [Quick Start](QUICK_START.md)
+
+### Documentación Técnica
+- **Backend**:
+  - [Módulos Backend](doc/backend/MODULES.md)
+  - [Support & Resistance](doc/backend/SUPPORT_RESISTANCE.md) 🆕
+- **Frontend**:
+  - [Componentes Frontend](doc/frontend/COMPONENTS.md)
+  - [Levels Viewer](doc/frontend/LEVELS_VIEWER.md) 🆕
+- **Trading**:
+  - [Estrategia de Trading](doc/trading/STRATEGY.md)
+
+### Resúmenes por Fase
+- [Fase 2 - Resumen Ejecutivo](doc/PHASE2_SUMMARY.md) 🆕
 
 ## 🔑 Configuración
 
