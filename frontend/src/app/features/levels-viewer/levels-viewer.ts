@@ -7,7 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { Select } from 'primeng/select';
 import { InputNumber } from 'primeng/inputnumber';
-import { Tabs, TabPanel, TabList, Tab } from 'primeng/tabs';
+import { Tabs, TabPanels, TabPanel, TabList, Tab } from 'primeng/tabs';
 import { ApiService } from '../../core/services/api.service';
 import { Level, Ticker, StrengthAnalysisResponse } from '../../core/models/market.model';
 
@@ -34,6 +34,7 @@ interface TimeframeOption {
     Select,
     InputNumber,
     Tabs,
+    TabPanels,
     TabPanel,
     TabList,
     Tab,
@@ -50,7 +51,7 @@ export class LevelsViewer implements OnInit, OnDestroy {
   // UI State
   loading = true;
   error: string | null = null;
-  activeTabIndex = 0;
+  activeTab = 'all';
 
   // Filters
   selectedSymbol = 'BTC-USDT';
@@ -108,7 +109,7 @@ export class LevelsViewer implements OnInit, OnDestroy {
       this.levels = response.levels;
 
       // Also load strength analysis for the analysis tab
-      if (this.activeTabIndex === 1) {
+      if (this.activeTab === 'analysis') {
         await this.loadStrengthAnalysis();
       }
     } catch (error: any) {
@@ -144,8 +145,8 @@ export class LevelsViewer implements OnInit, OnDestroy {
   }
 
   async onTabChange(event: any) {
-    this.activeTabIndex = event.index;
-    if (this.activeTabIndex === 1 && !this.strengthAnalysis) {
+    this.activeTab = event.value;
+    if (this.activeTab === 'analysis' && !this.strengthAnalysis) {
       await this.loadStrengthAnalysis();
     }
   }
@@ -170,13 +171,13 @@ export class LevelsViewer implements OnInit, OnDestroy {
   }
 
   // UI Helper Methods
-  getTypeColor(type: string): string {
+  getTypeColor(type: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     return type === 'SUPPORT' ? 'success' : 'danger';
   }
 
-  getStrengthColor(strength: number): string {
+  getStrengthColor(strength: number): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     if (strength >= 70) return 'success';
-    if (strength >= 40) return 'warning';
+    if (strength >= 40) return 'warn';
     return 'secondary';
   }
 
@@ -186,12 +187,12 @@ export class LevelsViewer implements OnInit, OnDestroy {
     return 'Weak';
   }
 
-  getStatusColor(status: string): string {
+  getStatusColor(status: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     switch (status) {
       case 'ACTIVE':
         return 'info';
       case 'TESTED':
-        return 'warning';
+        return 'warn';
       case 'BROKEN':
         return 'danger';
       default:

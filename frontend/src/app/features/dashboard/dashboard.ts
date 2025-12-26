@@ -77,7 +77,7 @@ export class Dashboard implements OnInit, OnDestroy {
     }
   }
 
-  getPriceChangeColor(change: number): string {
+  getPriceChangeColor(change: number): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     return change >= 0 ? 'success' : 'danger';
   }
 
@@ -107,13 +107,13 @@ export class Dashboard implements OnInit, OnDestroy {
     }
   }
 
-  getTypeColor(type: string): string {
+  getTypeColor(type: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     return type === 'SUPPORT' ? 'success' : 'danger';
   }
 
-  getStrengthColor(strength: number): string {
+  getStrengthColor(strength: number): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     if (strength >= 70) return 'success';
-    if (strength >= 40) return 'warning';
+    if (strength >= 40) return 'warn';
     return 'secondary';
   }
 
