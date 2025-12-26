@@ -5,7 +5,8 @@ services:
     env: node
     region: frankfurt  # Cambia según tu preferencia
     plan: free  # starter para producción
-    buildCommand: npm install && npm run build
+    rootDirectory: backend  # ⭐ Importante: especifica el subdirectorio
+    buildCommand: npm ci && npm run build  # ci instala todo incluyendo devDeps
     startCommand: npm run start:prod
     envVars:
       - key: NODE_ENV
