@@ -5,9 +5,9 @@ import { TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
-import { Select } from 'primeng/select';
-import { InputNumber } from 'primeng/inputnumber';
-import { Tabs, TabPanels, TabPanel, TabList, Tab } from 'primeng/tabs';
+import { SelectModule } from 'primeng/select';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { TabsModule } from 'primeng/tabs';
 import { ApiService } from '../../core/services/api.service';
 import { Level, Ticker, StrengthAnalysisResponse } from '../../core/models/market.model';
 
@@ -31,13 +31,9 @@ interface TimeframeOption {
     CardModule,
     ButtonModule,
     TagModule,
-    Select,
-    InputNumber,
-    Tabs,
-    TabPanels,
-    TabPanel,
-    TabList,
-    Tab,
+    SelectModule,
+    InputNumberModule,
+    TabsModule,
   ],
   templateUrl: './levels-viewer.html',
   styleUrl: './levels-viewer.scss',
@@ -229,5 +225,21 @@ export class LevelsViewer implements OnInit, OnDestroy {
 
   getSortedResistances(): Level[] {
     return this.strengthAnalysis?.byType.resistances.levels || [];
+  }
+
+  calculatePercentage(count: number): number {
+    const total = this.levels.length;
+    if (total === 0) return 0;
+    return Math.round((count / total) * 100);
+  }
+
+  calculateAverageStrength(levels: Level[]): number {
+    if (!levels || levels.length === 0) return 0;
+    const sum = levels.reduce((acc, level) => acc + level.strength, 0);
+    return sum / levels.length;
+  }
+
+  isDarkMode(): boolean {
+    return document.documentElement.classList.contains('dark-mode');
   }
 }

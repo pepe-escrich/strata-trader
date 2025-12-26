@@ -1,78 +1,121 @@
-<div class="levels-viewer-container p-4">
-  <p-card header="Support & Resistance Levels" class="mb-4">
-    <!-- Filters and Controls -->
-    <div class="filters-section mb-4">
-      <div class="grid">
-        <div class="col-12 md:col-3">
-          <label for="symbol" class="block mb-2 font-semibold">Symbol</label>
-          <p-select
-            inputId="symbol"
-            [options]="symbolOptions"
-            [(ngModel)]="selectedSymbol"
-            (onChange)="onFilterChange()"
-            [style]="{ width: '100%' }"
-            placeholder="Select symbol"
-            optionLabel="label"
-            optionValue="value"
-          />
-        </div>
+<div class="levels-viewer-container">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0 mb-2">
+          <i class="pi pi-chart-bar mr-2 text-primary"></i>
+          Support & Resistance Levels
+        </h1>
+        <p class="text-muted-color">Advanced technical analysis with multi-timeframe support & resistance levels</p>
+      </div>
+    </div>
+  </div>
 
-        <div class="col-12 md:col-3">
-          <label for="timeframe" class="block mb-2 font-semibold">Timeframe</label>
-          <p-select
-            inputId="timeframe"
-            [options]="timeframeOptions"
-            [(ngModel)]="selectedTimeframe"
-            (onChange)="onFilterChange()"
-            [style]="{ width: '100%' }"
-            placeholder="Select timeframe"
-            optionLabel="label"
-            optionValue="value"
-          />
-        </div>
+  <!-- Filters Card -->
+  <p-card class="mb-4 shadow-sm">
+    <ng-template pTemplate="header">
+      <div class="flex items-center gap-2 p-4 border-b border-surface">
+        <i class="pi pi-filter text-xl text-primary"></i>
+        <span class="text-xl font-semibold text-surface-900 dark:text-surface-0">Filters & Configuration</span>
+      </div>
+    </ng-template>
 
-        <div class="col-12 md:col-3">
-          <label for="minStrength" class="block mb-2 font-semibold">Min Strength</label>
-          <p-inputnumber
-            inputId="minStrength"
-            [(ngModel)]="minStrength"
-            [min]="0"
-            [max]="100"
-            [step]="10"
-            (onBlur)="onFilterChange()"
-            [style]="{ width: '100%' }"
-            placeholder="0-100"
-          />
-        </div>
-
-        <div class="col-12 md:col-3 flex align-items-end">
-          <p-button
-            icon="pi pi-refresh"
-            label="Recalculate"
-            (onClick)="forceRecalculate()"
-            [loading]="loading"
-            severity="primary"
-            [style]="{ width: '100%' }"
-          />
-        </div>
+    <div class="grid gap-4">
+      <!-- Symbol Selection -->
+      <div class="col-12 md:col-6 lg:col-3">
+        <label for="symbol" class="block mb-2 font-semibold text-surface-900 dark:text-surface-0">
+          <i class="pi pi-bitcoin mr-1"></i>
+          Symbol
+        </label>
+        <p-select
+          inputId="symbol"
+          [options]="symbolOptions"
+          [(ngModel)]="selectedSymbol"
+          (onChange)="onFilterChange()"
+          [style]="{ width: '100%' }"
+          placeholder="Select symbol"
+          optionLabel="label"
+          optionValue="value"
+        />
       </div>
 
-      <!-- Current Price Display -->
-      <div class="mt-3 p-3 bg-blue-50 border-round">
-        <div class="flex justify-content-between align-items-center">
-          <span class="font-semibold">Current Price:</span>
-          <span class="text-2xl font-bold text-blue-600">
-            {{ formatNumber(currentPrice, 2) }} USDT
-          </span>
-        </div>
+      <!-- Timeframe Selection -->
+      <div class="col-12 md:col-6 lg:col-3">
+        <label for="timeframe" class="block mb-2 font-semibold text-surface-900 dark:text-surface-0">
+          <i class="pi pi-clock mr-1"></i>
+          Timeframe
+        </label>
+        <p-select
+          inputId="timeframe"
+          [options]="timeframeOptions"
+          [(ngModel)]="selectedTimeframe"
+          (onChange)="onFilterChange()"
+          [style]="{ width: '100%' }"
+          placeholder="Select timeframe"
+          optionLabel="label"
+          optionValue="value"
+        />
+      </div>
+
+      <!-- Min Strength Filter -->
+      <div class="col-12 md:col-6 lg:col-3">
+        <label for="minStrength" class="block mb-2 font-semibold text-surface-900 dark:text-surface-0">
+          <i class="pi pi-sliders-h mr-1"></i>
+          Min Strength (0-100)
+        </label>
+        <p-inputnumber
+          inputId="minStrength"
+          [(ngModel)]="minStrength"
+          [min]="0"
+          [max]="100"
+          [step]="10"
+          (onBlur)="onFilterChange()"
+          [style]="{ width: '100%' }"
+          placeholder="0-100"
+        />
+      </div>
+
+      <!-- Recalculate Button -->
+      <div class="col-12 md:col-6 lg:col-3 flex items-end">
+        <p-button
+          icon="pi pi-refresh"
+          label="Recalculate Levels"
+          (onClick)="forceRecalculate()"
+          [loading]="loading"
+          severity="primary"
+          [raised]="true"
+          [style]="{ width: '100%' }"
+        />
       </div>
     </div>
 
-    <!-- Tabs -->
-    <p-tabs [(value)]="activeTab">
+    <!-- Current Price Display -->
+    <div class="mt-4 p-4 bg-primary-50 dark:bg-primary-950 rounded-lg border border-primary">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-dollar text-2xl text-primary"></i>
+          <span class="font-semibold text-surface-900 dark:text-surface-0">Current {{ selectedSymbol }} Price:</span>
+        </div>
+        <span class="text-3xl font-bold text-primary">
+          ${{ formatNumber(currentPrice, 2) }}
+        </span>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Main Content Tabs -->
+  <p-card class="shadow-sm">
+    <p-tabs [(value)]="activeTab" (onChange)="onTabChange($event)">
       <p-tablist>
-        <p-tab value="all">All Levels</p-tab>
-        <p-tab value="analysis">Strength Analysis</p-tab>
+        <p-tab value="all">
+          <i class="pi pi-list mr-2"></i>
+          All Levels ({{ levels.length }})
+        </p-tab>
+        <p-tab value="analysis">
+          <i class="pi pi-chart-pie mr-2"></i>
+          Strength Analysis
+        </p-tab>
       </p-tablist>
 
       <p-tabpanels>
@@ -81,66 +124,92 @@
           <p-table
             [value]="levels"
             [loading]="loading"
-            styleClass="p-datatable-striped"
+            styleClass="p-datatable-sm"
             responsiveLayout="scroll"
             [sortField]="'strength'"
             [sortOrder]="-1"
+            [paginator]="true"
+            [rows]="15"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} levels"
           >
             <ng-template pTemplate="header">
               <tr>
-                <th pSortableColumn="type">
+                <th pSortableColumn="type" style="width: 12%">
                   Type
                   <p-sortIcon field="type" />
                 </th>
-                <th pSortableColumn="price" class="text-right">
-                  Price
+                <th pSortableColumn="price" class="text-right" style="width: 15%">
+                  Price (USDT)
                   <p-sortIcon field="price" />
                 </th>
-                <th class="text-right">Distance</th>
-                <th pSortableColumn="strength" class="text-right">
+                <th class="text-right" style="width: 12%">Distance</th>
+                <th pSortableColumn="strength" class="text-right" style="width: 18%">
                   Strength
                   <p-sortIcon field="strength" />
                 </th>
-                <th pSortableColumn="touches" class="text-right">
+                <th pSortableColumn="touches" class="text-right" style="width: 10%">
                   Touches
                   <p-sortIcon field="touches" />
                 </th>
-                <th>Method</th>
-                <th>Status</th>
+                <th style="width: 18%">Method</th>
+                <th style="width: 15%">Status</th>
               </tr>
             </ng-template>
 
             <ng-template pTemplate="body" let-level>
-              <tr>
+              <tr class="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
                 <td>
                   <p-tag
                     [severity]="getTypeColor(level.type)"
                     [value]="level.type"
+                    [rounded]="true"
+                    [icon]="level.type === 'SUPPORT' ? 'pi pi-arrow-down' : 'pi pi-arrow-up'"
                   />
                 </td>
-                <td class="text-right font-semibold">
-                  {{ formatNumber(level.price, 2) }}
+                <td class="text-right">
+                  <span class="text-lg font-bold text-surface-900 dark:text-surface-0">
+                    ${{ formatNumber(level.price, 2) }}
+                  </span>
                 </td>
                 <td class="text-right">
                   <span
-                    [class]="
-                      level.price > currentPrice ? 'text-red-500' : 'text-green-500'
-                    "
+                    class="font-semibold px-2 py-1 rounded"
+                    [class.text-red-600]="level.price > currentPrice"
+                    [class.bg-red-100]="level.price > currentPrice"
+                    [class.dark:bg-red-950]="level.price > currentPrice"
+                    [class.text-green-600]="level.price < currentPrice"
+                    [class.bg-green-100]="level.price < currentPrice"
+                    [class.dark:bg-green-950]="level.price < currentPrice"
                   >
                     {{ formatDistance(level) }}
                   </span>
                 </td>
                 <td class="text-right">
-                  <p-tag
-                    [severity]="getStrengthColor(level.strength)"
-                    [value]="level.strength + ' - ' + getStrengthLabel(level.strength)"
-                  />
+                  <div class="flex items-center justify-end gap-2">
+                    <div class="flex-1 bg-surface-200 dark:bg-surface-700 rounded-full h-2 max-w-[100px]">
+                      <div
+                        class="h-2 rounded-full transition-all"
+                        [style.width.%]="level.strength"
+                        [class.bg-green-500]="level.strength >= 70"
+                        [class.bg-orange-500]="level.strength >= 40 && level.strength < 70"
+                        [class.bg-gray-400]="level.strength < 40"
+                      ></div>
+                    </div>
+                    <p-tag
+                      [severity]="getStrengthColor(level.strength)"
+                      [value]="level.strength.toString()"
+                      class="min-w-[50px]"
+                    />
+                  </div>
                 </td>
                 <td class="text-right">
-                  <span class="font-semibold">{{ level.touches }}</span>
+                  <span class="font-bold text-surface-900 dark:text-surface-0">{{ level.touches }}</span>
                 </td>
                 <td>
-                  <span class="text-sm">{{ getMethodLabel(level.method) }}</span>
+                  <span class="text-xs font-medium px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
+                    {{ getMethodLabel(level.method) }}
+                  </span>
                 </td>
                 <td>
                   <p-tag
@@ -154,14 +223,15 @@
 
             <ng-template pTemplate="emptymessage">
               <tr>
-                <td colspan="7" class="text-center">
-                  <div *ngIf="error" class="text-red-500">
-                    <i class="pi pi-exclamation-triangle mr-2"></i>
-                    {{ error }}
+                <td colspan="7" class="text-center p-8">
+                  <div *ngIf="error" class="text-red-500 flex items-center justify-center gap-2">
+                    <i class="pi pi-exclamation-triangle text-2xl"></i>
+                    <span class="text-lg">{{ error }}</span>
                   </div>
-                  <div *ngIf="!error && !loading">
-                    <i class="pi pi-info-circle mr-2"></i>
-                    No levels found for the selected criteria
+                  <div *ngIf="!error && !loading" class="text-muted-color">
+                    <i class="pi pi-info-circle text-4xl mb-3"></i>
+                    <p class="text-lg">No levels found for the selected criteria</p>
+                    <p class="text-sm">Try adjusting your filters or selecting a different symbol/timeframe</p>
                   </div>
                 </td>
               </tr>
@@ -172,87 +242,217 @@
         <!-- Strength Analysis Tab -->
         <p-tabpanel value="analysis">
           <div *ngIf="strengthAnalysis" class="strength-analysis">
-            <!-- Summary Cards -->
-            <div class="grid mb-4">
+            <!-- Summary Stats -->
+            <div class="grid mb-6">
+              <!-- Strong Levels -->
               <div class="col-12 md:col-4">
-                <div class="p-3 bg-green-50 border-round">
-                  <div class="text-sm text-600 mb-1">Strong Levels</div>
-                  <div class="text-2xl font-bold text-green-600">
+                <div class="p-5 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-900 rounded-lg hover:shadow-md transition-shadow">
+                  <div class="flex items-center justify-between mb-3">
+                    <i class="pi pi-shield text-4xl text-green-600"></i>
+                    <p-tag severity="success" value="Strong" [rounded]="true" />
+                  </div>
+                  <div class="text-sm text-muted-color mb-1">Strong Levels (≥70)</div>
+                  <div class="text-4xl font-bold text-green-600">
                     {{ strengthAnalysis.byStrength.strong.count }}
                   </div>
-                </div>
-              </div>
-              <div class="col-12 md:col-4">
-                <div class="p-3 bg-orange-50 border-round">
-                  <div class="text-sm text-600 mb-1">Medium Levels</div>
-                  <div class="text-2xl font-bold text-orange-600">
-                    {{ strengthAnalysis.byStrength.medium.count }}
+                  <div class="mt-2 text-xs text-muted-color">
+                    {{ calculatePercentage(strengthAnalysis.byStrength.strong.count) }}% of total
                   </div>
                 </div>
               </div>
+
+              <!-- Medium Levels -->
               <div class="col-12 md:col-4">
-                <div class="p-3 bg-gray-50 border-round">
-                  <div class="text-sm text-600 mb-1">Weak Levels</div>
-                  <div class="text-2xl font-bold text-gray-600">
+                <div class="p-5 bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-900 rounded-lg hover:shadow-md transition-shadow">
+                  <div class="flex items-center justify-between mb-3">
+                    <i class="pi pi-flag text-4xl text-orange-600"></i>
+                    <p-tag severity="warn" value="Medium" [rounded]="true" />
+                  </div>
+                  <div class="text-sm text-muted-color mb-1">Medium Levels (40-69)</div>
+                  <div class="text-4xl font-bold text-orange-600">
+                    {{ strengthAnalysis.byStrength.medium.count }}
+                  </div>
+                  <div class="mt-2 text-xs text-muted-color">
+                    {{ calculatePercentage(strengthAnalysis.byStrength.medium.count) }}% of total
+                  </div>
+                </div>
+              </div>
+
+              <!-- Weak Levels -->
+              <div class="col-12 md:col-4">
+                <div class="p-5 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg hover:shadow-md transition-shadow">
+                  <div class="flex items-center justify-between mb-3">
+                    <i class="pi pi-info-circle text-4xl text-gray-500"></i>
+                    <p-tag severity="secondary" value="Weak" [rounded]="true" />
+                  </div>
+                  <div class="text-sm text-muted-color mb-1">Weak Levels (<40)</div>
+                  <div class="text-4xl font-bold text-gray-600">
                     {{ strengthAnalysis.byStrength.weak.count }}
+                  </div>
+                  <div class="mt-2 text-xs text-muted-color">
+                    {{ calculatePercentage(strengthAnalysis.byStrength.weak.count) }}% of total
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Support vs Resistance -->
+            <!-- Support vs Resistance Comparison -->
             <div class="grid">
-              <div class="col-12 md:col-6">
-                <p-card header="Support Levels" class="h-full">
-                  <div class="mb-3">
-                    <span class="text-2xl font-bold text-green-600">
-                      {{ strengthAnalysis.byType.supports.count }}
-                    </span>
-                    <span class="ml-2 text-600">total supports</span>
+              <!-- Support Levels -->
+              <div class="col-12 lg:col-6">
+                <p-card class="h-full shadow-sm border border-green-200 dark:border-green-900">
+                  <ng-template pTemplate="header">
+                    <div class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-950">
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-arrow-down text-2xl text-green-600"></i>
+                        <span class="text-xl font-bold text-green-700 dark:text-green-400">Support Levels</span>
+                      </div>
+                      <p-tag
+                        severity="success"
+                        [value]="strengthAnalysis.byType.supports.count.toString()"
+                        [rounded]="true"
+                        class="text-lg"
+                      />
+                    </div>
+                  </ng-template>
+
+                  <div class="mb-4">
+                    <div class="text-sm text-muted-color mb-2">Average Strength</div>
+                    <div class="flex items-center gap-3">
+                      <div class="flex-1 bg-surface-200 dark:bg-surface-700 rounded-full h-3">
+                        <div
+                          class="bg-green-500 h-3 rounded-full transition-all"
+                          [style.width.%]="calculateAverageStrength(strengthAnalysis.byType.supports.levels)"
+                        ></div>
+                      </div>
+                      <span class="font-bold text-surface-900 dark:text-surface-0 min-w-[50px]">
+                        {{ calculateAverageStrength(strengthAnalysis.byType.supports.levels).toFixed(0) }}%
+                      </span>
+                    </div>
                   </div>
-                  <div class="level-list">
+
+                  <div class="text-sm text-muted-color mb-3 font-semibold">Top 5 Strongest Supports:</div>
+                  <div class="space-y-2">
                     <div
-                      *ngFor="let level of getSortedSupports().slice(0, 5)"
-                      class="flex justify-content-between align-items-center mb-2 p-2 border-round hover:bg-green-50"
+                      *ngFor="let level of getSortedSupports().slice(0, 5); let i = index"
+                      class="flex justify-between items-center p-3 rounded-lg transition-all"
+                      [class.bg-green-50]="!isDarkMode()"
+                      [class.dark:bg-green-950]="isDarkMode()"
+                      [class.hover:bg-green-100]="!isDarkMode()"
+                      [class.hover:dark:bg-green-900]="isDarkMode()"
                     >
-                      <span class="font-semibold">{{ formatNumber(level.price, 2) }}</span>
+                      <div class="flex items-center gap-3">
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 text-xs font-bold">
+                          {{ i + 1 }}
+                        </span>
+                        <div>
+                          <div class="font-bold text-lg text-surface-900 dark:text-surface-0">
+                            ${{ formatNumber(level.price, 2) }}
+                          </div>
+                          <div class="text-xs text-muted-color">
+                            {{ formatDistance(level) }} from current
+                          </div>
+                        </div>
+                      </div>
                       <p-tag
                         [severity]="getStrengthColor(level.strength)"
                         [value]="level.strength.toString()"
+                        [rounded]="true"
                       />
                     </div>
+                  </div>
+
+                  <div *ngIf="getSortedSupports().length === 0" class="text-center p-8 text-muted-color">
+                    <i class="pi pi-info-circle text-3xl mb-2"></i>
+                    <p>No support levels found</p>
                   </div>
                 </p-card>
               </div>
 
-              <div class="col-12 md:col-6">
-                <p-card header="Resistance Levels" class="h-full">
-                  <div class="mb-3">
-                    <span class="text-2xl font-bold text-red-600">
-                      {{ strengthAnalysis.byType.resistances.count }}
-                    </span>
-                    <span class="ml-2 text-600">total resistances</span>
+              <!-- Resistance Levels -->
+              <div class="col-12 lg:col-6">
+                <p-card class="h-full shadow-sm border border-red-200 dark:border-red-900">
+                  <ng-template pTemplate="header">
+                    <div class="flex items-center justify-between p-4 bg-red-50 dark:bg-red-950">
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-arrow-up text-2xl text-red-600"></i>
+                        <span class="text-xl font-bold text-red-700 dark:text-red-400">Resistance Levels</span>
+                      </div>
+                      <p-tag
+                        severity="danger"
+                        [value]="strengthAnalysis.byType.resistances.count.toString()"
+                        [rounded]="true"
+                        class="text-lg"
+                      />
+                    </div>
+                  </ng-template>
+
+                  <div class="mb-4">
+                    <div class="text-sm text-muted-color mb-2">Average Strength</div>
+                    <div class="flex items-center gap-3">
+                      <div class="flex-1 bg-surface-200 dark:bg-surface-700 rounded-full h-3">
+                        <div
+                          class="bg-red-500 h-3 rounded-full transition-all"
+                          [style.width.%]="calculateAverageStrength(strengthAnalysis.byType.resistances.levels)"
+                        ></div>
+                      </div>
+                      <span class="font-bold text-surface-900 dark:text-surface-0 min-w-[50px]">
+                        {{ calculateAverageStrength(strengthAnalysis.byType.resistances.levels).toFixed(0) }}%
+                      </span>
+                    </div>
                   </div>
-                  <div class="level-list">
+
+                  <div class="text-sm text-muted-color mb-3 font-semibold">Top 5 Strongest Resistances:</div>
+                  <div class="space-y-2">
                     <div
-                      *ngFor="let level of getSortedResistances().slice(0, 5)"
-                      class="flex justify-content-between align-items-center mb-2 p-2 border-round hover:bg-red-50"
+                      *ngFor="let level of getSortedResistances().slice(0, 5); let i = index"
+                      class="flex justify-between items-center p-3 rounded-lg transition-all"
+                      [class.bg-red-50]="!isDarkMode()"
+                      [class.dark:bg-red-950]="isDarkMode()"
+                      [class.hover:bg-red-100]="!isDarkMode()"
+                      [class.hover:dark:bg-red-900]="isDarkMode()"
                     >
-                      <span class="font-semibold">{{ formatNumber(level.price, 2) }}</span>
+                      <div class="flex items-center gap-3">
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 text-xs font-bold">
+                          {{ i + 1 }}
+                        </span>
+                        <div>
+                          <div class="font-bold text-lg text-surface-900 dark:text-surface-0">
+                            ${{ formatNumber(level.price, 2) }}
+                          </div>
+                          <div class="text-xs text-muted-color">
+                            {{ formatDistance(level) }} from current
+                          </div>
+                        </div>
+                      </div>
                       <p-tag
                         [severity]="getStrengthColor(level.strength)"
                         [value]="level.strength.toString()"
+                        [rounded]="true"
                       />
                     </div>
+                  </div>
+
+                  <div *ngIf="getSortedResistances().length === 0" class="text-center p-8 text-muted-color">
+                    <i class="pi pi-info-circle text-3xl mb-2"></i>
+                    <p>No resistance levels found</p>
                   </div>
                 </p-card>
               </div>
             </div>
           </div>
 
-          <div *ngIf="!strengthAnalysis && !loading" class="text-center p-5 text-600">
-            <i class="pi pi-info-circle mr-2"></i>
-            Loading strength analysis...
+          <!-- Loading State -->
+          <div *ngIf="!strengthAnalysis && loading" class="text-center p-12">
+            <i class="pi pi-spin pi-spinner text-5xl text-primary mb-4"></i>
+            <p class="text-lg text-muted-color">Loading strength analysis...</p>
+          </div>
+
+          <!-- No Data State -->
+          <div *ngIf="!strengthAnalysis && !loading" class="text-center p-12">
+            <i class="pi pi-info-circle text-5xl text-muted-color mb-4"></i>
+            <p class="text-lg text-muted-color">No strength analysis data available</p>
+            <p class="text-sm text-muted-color">Please wait while we analyze the levels</p>
           </div>
         </p-tabpanel>
       </p-tabpanels>
