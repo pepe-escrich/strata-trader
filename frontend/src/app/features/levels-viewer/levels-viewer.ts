@@ -242,4 +242,8 @@ export class LevelsViewer implements OnInit, OnDestroy {
   isDarkMode(): boolean {
     return document.documentElement.classList.contains('dark-mode');
   }
+
+  isDesktop(): boolean {
+    return window.innerWidth >= 768; // md breakpoint
+  }
 }
