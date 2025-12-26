@@ -14,7 +14,7 @@ import { TooltipModule } from 'primeng/tooltip';
   styleUrl: './app.scss'
 })
 export class App {
-  protected readonly title = signal('Strata Trader');
+  protected readonly title = signal('StrataTrader v1');
   protected readonly darkMode = signal(false);
 
   menuItems: MenuItem[] = [
