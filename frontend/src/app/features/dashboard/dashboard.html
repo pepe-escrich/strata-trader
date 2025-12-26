@@ -65,4 +65,75 @@
       </ng-template>
     </p-table>
   </p-card>
+
+  <!-- Nearby Levels Card -->
+  <p-card header="BTC-USDT - Nearby Support & Resistance" class="mb-4">
+    <ng-template pTemplate="header">
+      <div class="flex justify-content-between align-items-center p-3">
+        <span class="font-bold">BTC-USDT - Nearby Support & Resistance</span>
+        <a routerLink="/levels" class="text-primary text-sm">
+          View All Levels <i class="pi pi-arrow-right ml-1"></i>
+        </a>
+      </div>
+    </ng-template>
+
+    <div *ngIf="!levelsLoading && nearbyLevels.length > 0">
+      <div class="grid">
+        <div
+          *ngFor="let level of nearbyLevels"
+          class="col-12 md:col-6 lg:col-4"
+        >
+          <div
+            class="p-3 border-round"
+            [class.bg-green-50]="level.type === 'SUPPORT'"
+            [class.bg-red-50]="level.type === 'RESISTANCE'"
+          >
+            <div class="flex justify-content-between align-items-start mb-2">
+              <p-tag
+                [severity]="getTypeColor(level.type)"
+                [value]="level.type"
+              ></p-tag>
+              <span
+                class="text-sm font-semibold"
+                [class.text-green-600]="level.price < getCurrentPrice()"
+                [class.text-red-600]="level.price > getCurrentPrice()"
+              >
+                {{ getDistanceFromPrice(level) }}
+              </span>
+            </div>
+            <div class="text-2xl font-bold mb-1">
+              {{ formatNumber(level.price, 2) }}
+            </div>
+            <div class="flex justify-content-between align-items-center text-sm">
+              <span class="text-600">Strength:</span>
+              <p-tag
+                [severity]="getStrengthColor(level.strength)"
+                [value]="level.strength.toString()"
+              ></p-tag>
+            </div>
+            <div class="flex justify-content-between align-items-center text-sm mt-1">
+              <span class="text-600">Touches:</span>
+              <span class="font-semibold">{{ level.touches }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      *ngIf="levelsLoading"
+      class="text-center p-5 text-600"
+    >
+      <i class="pi pi-spin pi-spinner mr-2"></i>
+      Loading nearby levels...
+    </div>
+
+    <div
+      *ngIf="!levelsLoading && nearbyLevels.length === 0"
+      class="text-center p-5 text-600"
+    >
+      <i class="pi pi-info-circle mr-2"></i>
+      No nearby levels found
+    </div>
+  </p-card>
 </div>

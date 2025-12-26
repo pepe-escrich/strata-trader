@@ -1,0 +1,39 @@
+.levels-viewer-container {
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .filters-section {
+    label {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+  }
+
+  .level-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .strength-analysis {
+    .p-card {
+      height: 100%;
+
+      ::ng-deep .p-card-body {
+        height: 100%;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .levels-viewer-container {
+    padding: 1rem !important;
+
+    .filters-section {
+      .col-12 {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+}

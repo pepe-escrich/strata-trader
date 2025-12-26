@@ -1,9 +1,14 @@
 <div class="app-container">
-  <header class="app-header bg-primary text-white p-3">
-    <div class="container mx-auto">
-      <h1 class="text-2xl font-bold m-0">{{ title() }}</h1>
-      <p class="text-sm m-0">Crypto Trading Bot</p>
+  <header class="app-header">
+    <div class="bg-primary text-white p-3">
+      <div class="container mx-auto">
+        <h1 class="text-2xl font-bold m-0">{{ title() }}</h1>
+        <p class="text-sm m-0">Crypto Trading Bot</p>
+      </div>
     </div>
+    <nav class="app-navigation">
+      <p-menubar [model]="menuItems"></p-menubar>
+    </nav>
   </header>
 
   <main class="app-content">

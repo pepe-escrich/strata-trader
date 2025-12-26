@@ -1,7 +1,16 @@
 import { Injectable } from '@angular/core';
 import axios, { AxiosInstance } from 'axios';
 import { environment } from '../../../environments/environment';
-import { Symbol, Candle, Ticker, OrderBook, Interval } from '../models/market.model';
+import {
+  Symbol,
+  Candle,
+  Ticker,
+  OrderBook,
+  Interval,
+  LevelsResponse,
+  MultiTimeframeLevelsResponse,
+  StrengthAnalysisResponse
+} from '../models/market.model';
 
 @Injectable({
   providedIn: 'root',
@@ -87,5 +96,72 @@ export class ApiService {
   async getCacheStats(): Promise<{ candleCacheSize: number; tickerCacheSize: number }> {
     const response = await this.api.get('/market/cache/stats');
     return response.data;
+  }
+
+  // ========== Support/Resistance Endpoints ==========
+
+  async getLevels(
+    symbol: string,
+    timeframe: string = '1h',
+    minStrength?: number
+  ): Promise<LevelsResponse> {
+    const params: any = { timeframe };
+    if (minStrength) params.minStrength = minStrength;
+
+    const response = await this.api.get(`/levels/${symbol}`, { params });
+    return response.data;
+  }
+
+  async calculateLevels(
+    symbol: string,
+    timeframes: string[] = ['1h'],
+    minStrength?: number
+  ): Promise<any> {
+    const response = await this.api.post('/levels/calculate', {
+      symbol,
+      timeframes,
+      minStrength,
+    });
+    return response.data;
+  }
+
+  async getNearbyLevels(
+    symbol: string,
+    timeframe: string = '1h',
+    distancePercent: number = 0.5
+  ): Promise<LevelsResponse> {
+    const response = await this.api.get(`/levels/nearby/${symbol}`, {
+      params: { timeframe, distancePercent },
+    });
+    return response.data;
+  }
+
+  async getLevelStrength(
+    symbol: string,
+    timeframe: string = '1h'
+  ): Promise<StrengthAnalysisResponse> {
+    const response = await this.api.get(`/levels/strength/${symbol}`, {
+      params: { timeframe },
+    });
+    return response.data;
+  }
+
+  async getMultiTimeframeLevels(
+    symbol: string,
+    timeframes?: string[]
+  ): Promise<MultiTimeframeLevelsResponse> {
+    const params: any = {};
+    if (timeframes) params.timeframes = timeframes.join(',');
+
+    const response = await this.api.get(`/levels/multi-timeframe/${symbol}`, { params });
+    return response.data;
+  }
+
+  async clearLevelsCache(symbol?: string): Promise<void> {
+    if (symbol) {
+      await this.api.delete(`/levels/cache/${symbol}`);
+    } else {
+      await this.api.delete('/levels/cache');
+    }
   }
 }

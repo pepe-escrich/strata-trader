@@ -1,22 +1,25 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ApiService } from '../../core/services/api.service';
-import { Ticker } from '../../core/models/market.model';
+import { Ticker, Level } from '../../core/models/market.model';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, TableModule, CardModule, ButtonModule, TagModule],
+  imports: [CommonModule, RouterModule, TableModule, CardModule, ButtonModule, TagModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
 export class Dashboard implements OnInit, OnDestroy {
   tickers: Ticker[] = [];
+  nearbyLevels: Level[] = [];
   loading = true;
+  levelsLoading = false;
   error: string | null = null;
   private refreshInterval: any;
 
@@ -34,8 +37,16 @@ export class Dashboard implements OnInit, OnDestroy {
 
   async ngOnInit() {
     await this.loadTickers();
-    // Auto-refresh every 5 seconds
-    this.refreshInterval = setInterval(() => this.loadTickers(), 5000);
+    await this.loadNearbyLevels();
+    // Auto-refresh every 5 seconds for tickers, 30 seconds for levels
+    this.refreshInterval = setInterval(() => {
+      this.loadTickers();
+      // Refresh levels every 6th iteration (30 seconds)
+      const iterations = Math.floor(Date.now() / 5000);
+      if (iterations % 6 === 0) {
+        this.loadNearbyLevels();
+      }
+    }, 5000);
   }
 
   ngOnDestroy() {
@@ -81,5 +92,41 @@ export class Dashboard implements OnInit, OnDestroy {
       return (volume / 1000).toFixed(2) + 'K';
     }
     return volume.toFixed(2);
+  }
+
+  async loadNearbyLevels() {
+    try {
+      this.levelsLoading = true;
+      const symbol = 'BTC-USDT';
+      const response = await this.apiService.getNearbyLevels(symbol, '1h', 2);
+      this.nearbyLevels = response.levels.slice(0, 5);
+    } catch (error: any) {
+      console.error('Error loading nearby levels:', error);
+    } finally {
+      this.levelsLoading = false;
+    }
+  }
+
+  getTypeColor(type: string): string {
+    return type === 'SUPPORT' ? 'success' : 'danger';
+  }
+
+  getStrengthColor(strength: number): string {
+    if (strength >= 70) return 'success';
+    if (strength >= 40) return 'warning';
+    return 'secondary';
+  }
+
+  getCurrentPrice(): number {
+    const btcTicker = this.tickers.find(t => t.symbol === 'BTC-USDT');
+    return btcTicker?.price || 0;
+  }
+
+  getDistanceFromPrice(level: Level): string {
+    const currentPrice = this.getCurrentPrice();
+    if (currentPrice === 0) return '';
+    const distance = ((level.price - currentPrice) / currentPrice) * 100;
+    const sign = distance > 0 ? '+' : '';
+    return `${sign}${distance.toFixed(2)}%`;
   }
 }

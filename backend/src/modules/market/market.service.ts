@@ -65,7 +65,7 @@ export class MarketService {
       const cacheKey = this.getCandleCacheKey(symbol, interval, limit);
       const cached = this.candleCache.get(cacheKey);
 
-      if (this.isCacheValid(cached)) {
+      if (this.isCacheValid(cached) && cached) {
         this.logger.debug(`Cache hit for ${cacheKey}`);
         return cached.data.map(c => new CandleEntity(c));
       }
@@ -94,7 +94,7 @@ export class MarketService {
   async getTicker(symbol: string): Promise<TickerEntity> {
     const cached = this.tickerCache.get(symbol);
 
-    if (this.isCacheValid(cached)) {
+    if (this.isCacheValid(cached) && cached) {
       this.logger.debug(`Cache hit for ticker ${symbol}`);
       return new TickerEntity(cached.data);
     }

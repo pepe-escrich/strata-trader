@@ -8,7 +8,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Enable CORS for frontend communication
-  const allowedOrigins = [
+  const allowedOrigins: (string | RegExp)[] = [
     'http://localhost:4200',
     'http://localhost:3000',
     // Add your Vercel deployment URL here after deployment
@@ -22,7 +22,7 @@ async function bootstrap() {
   }
 
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
 

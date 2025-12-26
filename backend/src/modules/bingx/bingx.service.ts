@@ -243,11 +243,11 @@ export class BingxService {
 
     return {
       symbol,
-      bids: response.bids.map(([price, quantity]) => ({
+      bids: response.bids.map(([price, quantity]: [string, string]) => ({
         price: parseFloat(price),
         quantity: parseFloat(quantity),
       })),
-      asks: response.asks.map(([price, quantity]) => ({
+      asks: response.asks.map(([price, quantity]: [string, string]) => ({
         price: parseFloat(price),
         quantity: parseFloat(quantity),
       })),
@@ -268,7 +268,7 @@ export class BingxService {
     );
 
     return {
-      balances: response.balance.map((bal) => ({
+      balances: response.balance.map((bal: any) => ({
         asset: bal.asset,
         balance: parseFloat(bal.balance),
         equity: parseFloat(bal.equity),
