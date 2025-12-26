@@ -26,16 +26,17 @@ import tradingConfig from './config/trading.config';
     }),
 
     // Database (MongoDB) - Optional for now
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('database.uri'),
-        // Optional: uncomment when MongoDB is ready
-        // user: configService.get<string>('database.user'),
-        // pass: configService.get<string>('database.password'),
-      }),
-      inject: [ConfigService],
-    }),
+    // Uncomment when MongoDB is configured
+    // MongooseModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: async (configService: ConfigService) => ({
+    //     uri: configService.get<string>('database.uri'),
+    //     // Optional: uncomment when MongoDB is ready
+    //     // user: configService.get<string>('database.user'),
+    //     // pass: configService.get<string>('database.password'),
+    //   }),
+    //   inject: [ConfigService],
+    // }),
 
     BingxModule,
 
