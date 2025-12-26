@@ -1,32 +1,36 @@
 import { Component, signal, effect } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MenuItem } from 'primeng/api';
-import { MenubarModule } from 'primeng/menubar';
 import { ButtonModule } from 'primeng/button';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TooltipModule } from 'primeng/tooltip';
+import { DrawerModule } from 'primeng/drawer';
+import { MenuModule } from 'primeng/menu';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, MenubarModule, ButtonModule, ToolbarModule, TooltipModule],
+  imports: [RouterOutlet, ButtonModule, ToolbarModule, TooltipModule, DrawerModule, MenuModule],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App {
   protected readonly title = signal('StrataTrader v1');
   protected readonly darkMode = signal(false);
+  protected readonly sidebarVisible = signal(false);
 
   menuItems: MenuItem[] = [
     {
       label: 'Dashboard',
       icon: 'pi pi-home',
-      routerLink: '/dashboard'
+      routerLink: '/dashboard',
+      command: () => this.sidebarVisible.set(false)
     },
     {
       label: 'Support & Resistance',
       icon: 'pi pi-chart-line',
-      routerLink: '/levels'
+      routerLink: '/levels',
+      command: () => this.sidebarVisible.set(false)
     }
   ];
 
@@ -48,5 +52,9 @@ export class App {
   toggleDarkMode() {
     this.darkMode.update(v => !v);
     localStorage.setItem('darkMode', this.darkMode().toString());
+  }
+
+  toggleSidebar() {
+    this.sidebarVisible.update(v => !v);
   }
 }
