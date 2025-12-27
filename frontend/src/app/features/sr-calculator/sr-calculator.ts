@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 // PrimeNG imports
 import { CardModule } from 'primeng/card';
@@ -109,7 +110,7 @@ export class SRCalculator implements OnInit {
   loadCurrentPrice() {
     this.loading.set(true);
 
-    this.http.get<any>(`/api/market/ticker/${this.params.symbol}`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/market/ticker/${this.params.symbol}`).subscribe({
       next: (data) => {
         this.currentPrice = data.price;
         this.loading.set(false);
@@ -132,7 +133,7 @@ export class SRCalculator implements OnInit {
       minStrength: 0 // Obtenemos todos los niveles sin filtrar por fuerza mínima
     };
 
-    this.http.post<any>('/api/levels/calculate', body).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/levels/calculate`, body).subscribe({
       next: (data) => {
         // El backend devuelve { symbol, timeframes, results: { '1h': { count, levels } } }
         const timeframeData = data.results[this.params.timeframe];
@@ -160,7 +161,7 @@ export class SRCalculator implements OnInit {
   saveLevels() {
     const activeLevels = this.levels.filter(l => l.active);
 
-    this.http.post('/api/levels/save', {
+    this.http.post(`${environment.apiUrl}/levels/save`, {
       symbol: this.params.symbol,
       timeframe: this.params.timeframe,
       levels: activeLevels,
