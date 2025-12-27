@@ -1,0 +1,494 @@
+<div class="sr-calculator-container">
+  <!-- Header -->
+  <div class="mb-4 md:mb-6">
+    <h1 class="text-2xl md:text-3xl font-bold m-0 mb-2">
+      <i class="pi pi-chart-line mr-2 text-primary"></i>
+      <span class="hidden sm:inline">Constructor de Niveles S/R</span>
+      <span class="sm:hidden">S/R Calculator</span>
+    </h1>
+    <p class="text-xs md:text-sm opacity-70">
+      <span class="hidden sm:inline">Configure y calcule niveles de soporte y resistencia personalizados</span>
+      <span class="sm:hidden">Calcule niveles S/R personalizados</span>
+    </p>
+  </div>
+
+  <!-- Selector de Moneda y Timeframe -->
+  <p-card class="mb-3 md:mb-4 shadow-sm">
+    <ng-template pTemplate="header">
+      <div class="flex items-center gap-2 p-3 md:p-4 border-b">
+        <i class="pi pi-cog text-lg md:text-xl text-primary"></i>
+        <span class="text-base md:text-xl font-semibold">
+          <span class="hidden sm:inline">Configuración Principal</span>
+          <span class="sm:hidden">Config</span>
+        </span>
+      </div>
+    </ng-template>
+
+    <div class="grid gap-4">
+      <!-- Symbol -->
+      <div class="col-12 md:col-6">
+        <label for="symbol" class="block mb-2 font-semibold text-sm md:text-base">
+          <i class="pi pi-bitcoin mr-1"></i>
+          Moneda
+        </label>
+        <p-select
+          inputId="symbol"
+          [options]="symbolOptions"
+          [(ngModel)]="params.symbol"
+          (onChange)="loadCurrentPrice()"
+          [style]="{ width: '100%' }"
+          placeholder="Seleccionar moneda"
+          optionLabel="label"
+          optionValue="value"
+        />
+      </div>
+
+      <!-- Timeframe -->
+      <div class="col-12 md:col-6">
+        <label for="timeframe" class="block mb-2 font-semibold text-sm md:text-base">
+          <i class="pi pi-clock mr-1"></i>
+          Timeframe
+        </label>
+        <p-select
+          inputId="timeframe"
+          [options]="timeframeOptions"
+          [(ngModel)]="params.timeframe"
+          [style]="{ width: '100%' }"
+          placeholder="Seleccionar timeframe"
+          optionLabel="label"
+          optionValue="value"
+        />
+      </div>
+
+      <!-- Current Price Display -->
+      <div class="col-12">
+        <div class="p-3 md:p-4 bg-primary-50 dark:bg-primary-950 rounded-lg border border-primary">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-dollar text-xl md:text-2xl text-primary"></i>
+              <span class="font-semibold text-sm md:text-base">
+                <span class="hidden sm:inline">Precio Actual {{ params.symbol }}:</span>
+                <span class="sm:hidden">{{ params.symbol }}:</span>
+              </span>
+            </div>
+            <span class="text-2xl md:text-3xl font-bold text-primary">
+              ${{ formatNumber(currentPrice, 2) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Parámetros de Cálculo -->
+  <p-card class="mb-3 md:mb-4 shadow-sm">
+    <ng-template pTemplate="header">
+      <div class="flex items-center gap-2 p-3 md:p-4 border-b">
+        <i class="pi pi-sliders-h text-lg md:text-xl text-primary"></i>
+        <span class="text-base md:text-xl font-semibold">
+          <span class="hidden sm:inline">Parámetros de Cálculo</span>
+          <span class="sm:hidden">Parámetros</span>
+        </span>
+      </div>
+    </ng-template>
+
+    <p-accordion [value]="['0']" [multiple]="true">
+      <!-- Parámetros Básicos -->
+      <p-accordionpanel value="0">
+        <p-accordionheader>
+          <i class="pi pi-chart-bar mr-2"></i>
+          Parámetros Básicos
+        </p-accordionheader>
+        <p-accordioncontent>
+          <div class="grid gap-4">
+            <!-- Lookback Period -->
+            <div class="col-12 md:col-6 lg:col-4">
+              <label class="block mb-2 font-semibold text-sm">
+                <i class="pi pi-calendar mr-1"></i>
+                Período de Análisis (velas)
+              </label>
+              <p-inputnumber
+                [(ngModel)]="params.lookbackPeriod"
+                [min]="10"
+                [max]="1000"
+                [step]="10"
+                [style]="{ width: '100%' }"
+                [showButtons]="true"
+                buttonLayout="horizontal"
+                incrementButtonIcon="pi pi-plus"
+                decrementButtonIcon="pi pi-minus"
+              />
+              <small class="block mt-1 opacity-70">Número de velas históricas a analizar</small>
+            </div>
+
+            <!-- Min Touches -->
+            <div class="col-12 md:col-6 lg:col-4">
+              <label class="block mb-2 font-semibold text-sm">
+                <i class="pi pi-check-circle mr-1"></i>
+                Toques Mínimos
+              </label>
+              <p-inputnumber
+                [(ngModel)]="params.minTouches"
+                [min]="1"
+                [max]="10"
+                [step]="1"
+                [style]="{ width: '100%' }"
+                [showButtons]="true"
+                buttonLayout="horizontal"
+                incrementButtonIcon="pi pi-plus"
+                decrementButtonIcon="pi pi-minus"
+              />
+              <small class="block mt-1 opacity-70">Mínimo de veces que el precio debe tocar el nivel</small>
+            </div>
+
+            <!-- Price Threshold -->
+            <div class="col-12 md:col-6 lg:col-4">
+              <label class="block mb-2 font-semibold text-sm">
+                <i class="pi pi-percentage mr-1"></i>
+                Umbral de Precio (%)
+              </label>
+              <p-inputnumber
+                [(ngModel)]="params.priceThreshold"
+                [min]="0.1"
+                [max]="5"
+                [step]="0.1"
+                [minFractionDigits]="1"
+                [maxFractionDigits]="1"
+                [style]="{ width: '100%' }"
+                [showButtons]="true"
+                buttonLayout="horizontal"
+                incrementButtonIcon="pi pi-plus"
+                decrementButtonIcon="pi pi-minus"
+              />
+              <small class="block mt-1 opacity-70">Variación permitida para considerar un mismo nivel</small>
+            </div>
+          </div>
+        </p-accordioncontent>
+      </p-accordionpanel>
+
+      <!-- Parámetros de Peso -->
+      <p-accordionpanel value="1">
+        <p-accordionheader>
+          <i class="pi pi-balance-scale mr-2"></i>
+          Pesos de Factores
+        </p-accordionheader>
+        <p-accordioncontent>
+          <div class="grid gap-4">
+            <!-- Volume Weight -->
+            <div class="col-12 md:col-6">
+              <label class="block mb-2 font-semibold text-sm">
+                <i class="pi pi-chart-bar mr-1"></i>
+                Peso del Volumen (%)
+              </label>
+              <p-inputnumber
+                [(ngModel)]="params.volumeWeight"
+                [min]="0"
+                [max]="100"
+                [step]="5"
+                [style]="{ width: '100%' }"
+                [showButtons]="true"
+                buttonLayout="horizontal"
+                incrementButtonIcon="pi pi-plus"
+                decrementButtonIcon="pi pi-minus"
+                suffix="%"
+              />
+              <small class="block mt-1 opacity-70">Importancia del volumen en el cálculo de fuerza</small>
+            </div>
+
+            <!-- Time Weight -->
+            <div class="col-12 md:col-6">
+              <label class="block mb-2 font-semibold text-sm">
+                <i class="pi pi-clock mr-1"></i>
+                Peso del Tiempo (%)
+              </label>
+              <p-inputnumber
+                [(ngModel)]="params.timeWeight"
+                [min]="0"
+                [max]="100"
+                [step]="5"
+                [style]="{ width: '100%' }"
+                [showButtons]="true"
+                buttonLayout="horizontal"
+                incrementButtonIcon="pi pi-plus"
+                decrementButtonIcon="pi pi-minus"
+                suffix="%"
+              />
+              <small class="block mt-1 opacity-70">Importancia de la antigüedad del nivel</small>
+            </div>
+          </div>
+        </p-accordioncontent>
+      </p-accordionpanel>
+
+      <!-- Métodos de Detección -->
+      <p-accordionpanel value="2">
+        <p-accordionheader>
+          <i class="pi pi-cog mr-2"></i>
+          Métodos de Detección
+        </p-accordionheader>
+        <p-accordioncontent>
+          <div class="grid gap-4">
+            <!-- Pivot Points -->
+            <div class="col-12 md:col-6 lg:col-4">
+              <div class="flex items-center gap-3 p-3 border rounded-lg">
+                <p-togglebutton
+                  [(ngModel)]="params.usePivotPoints"
+                  onLabel="Activado"
+                  offLabel="Desactivado"
+                  onIcon="pi pi-check"
+                  offIcon="pi pi-times"
+                />
+                <div>
+                  <div class="font-semibold text-sm">Puntos Pivote</div>
+                  <small class="opacity-70">Detección de máximos y mínimos locales</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fibonacci -->
+            <div class="col-12 md:col-6 lg:col-4">
+              <div class="flex items-center gap-3 p-3 border rounded-lg">
+                <p-togglebutton
+                  [(ngModel)]="params.useFibonacci"
+                  onLabel="Activado"
+                  offLabel="Desactivado"
+                  onIcon="pi pi-check"
+                  offIcon="pi pi-times"
+                />
+                <div>
+                  <div class="font-semibold text-sm">Fibonacci</div>
+                  <small class="opacity-70">Niveles de retroceso de Fibonacci</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Volume Profile -->
+            <div class="col-12 md:col-6 lg:col-4">
+              <div class="flex items-center gap-3 p-3 border rounded-lg">
+                <p-togglebutton
+                  [(ngModel)]="params.useVolumeProfile"
+                  onLabel="Activado"
+                  offLabel="Desactivado"
+                  onIcon="pi pi-check"
+                  offIcon="pi pi-times"
+                />
+                <div>
+                  <div class="font-semibold text-sm">Perfil de Volumen</div>
+                  <small class="opacity-70">Zonas de alto volumen negociado</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </p-accordioncontent>
+      </p-accordionpanel>
+    </p-accordion>
+
+    <p-divider />
+
+    <!-- Calculate Button -->
+    <div class="flex flex-col sm:flex-row gap-3 justify-end">
+      <p-button
+        icon="pi pi-calculator"
+        label="Calcular Niveles"
+        (onClick)="calculateLevels()"
+        [loading]="calculating()"
+        severity="primary"
+        [raised]="true"
+        size="large"
+      />
+    </div>
+  </p-card>
+
+  <!-- Chart Placeholder -->
+  <p-card class="mb-3 md:mb-4 shadow-sm" *ngIf="levels.length > 0">
+    <ng-template pTemplate="header">
+      <div class="flex items-center gap-2 p-3 md:p-4 border-b">
+        <i class="pi pi-chart-line text-lg md:text-xl text-primary"></i>
+        <span class="text-base md:text-xl font-semibold">Gráfica de Precio</span>
+      </div>
+    </ng-template>
+
+    <div class="flex items-center justify-center p-12 bg-surface-100 dark:bg-surface-800 rounded-lg border-2 border-dashed">
+      <div class="text-center">
+        <i class="pi pi-chart-line text-6xl mb-4 opacity-50"></i>
+        <p class="text-lg font-semibold mb-2">Gráfica de Trading</p>
+        <p class="text-sm opacity-70">Se integrará en la siguiente iteración</p>
+      </div>
+    </div>
+  </p-card>
+
+  <!-- Levels Table -->
+  <p-card class="shadow-sm" *ngIf="levels.length > 0">
+    <ng-template pTemplate="header">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-3 md:p-4 border-b">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-list text-lg md:text-xl text-primary"></i>
+          <span class="text-base md:text-xl font-semibold">
+            Niveles Calculados ({{ levels.length }})
+          </span>
+        </div>
+        <p-button
+          icon="pi pi-save"
+          [label]="isDesktop() ? 'Guardar Niveles Activos' : 'Guardar'"
+          (onClick)="saveLevels()"
+          severity="success"
+          [raised]="true"
+          size="small"
+        />
+      </div>
+    </ng-template>
+
+    <!-- Mobile: Card View -->
+    <div class="block md:hidden">
+      <div *ngFor="let level of levels" class="p-3 border-b last:border-b-0">
+        <div class="flex justify-between items-start mb-3">
+          <div class="flex items-center gap-2">
+            <p-tag
+              [severity]="getTypeColor(level.type)"
+              [value]="level.type"
+              [rounded]="true"
+              [icon]="level.type === 'SUPPORT' ? 'pi pi-arrow-down' : 'pi pi-arrow-up'"
+            />
+          </div>
+          <p-togglebutton
+            [(ngModel)]="level.active"
+            onLabel="Activo"
+            offLabel="Inactivo"
+            onIcon="pi pi-check"
+            offIcon="pi pi-times"
+            size="small"
+          />
+        </div>
+
+        <div class="text-2xl font-bold mb-2">
+          ${{ formatNumber(level.price, 2) }}
+        </div>
+
+        <div class="grid mb-2">
+          <div class="col-4">
+            <div class="text-xs opacity-70 mb-1">Fuerza</div>
+            <p-tag
+              [severity]="getStrengthColor(level.strength)"
+              [value]="level.strength.toString()"
+            />
+          </div>
+          <div class="col-4">
+            <div class="text-xs opacity-70 mb-1">Toques</div>
+            <span class="font-bold">{{ level.touches }}</span>
+          </div>
+          <div class="col-4">
+            <div class="text-xs opacity-70 mb-1">Distancia</div>
+            <span class="text-sm font-semibold">{{ formatDistance(level) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop: Table View -->
+    <p-table
+      [value]="levels"
+      styleClass="p-datatable-sm hidden md:table"
+      responsiveLayout="scroll"
+      [sortField]="'strength'"
+      [sortOrder]="-1"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 10%">Activo</th>
+          <th pSortableColumn="type" style="width: 12%">
+            Tipo
+            <p-sortIcon field="type" />
+          </th>
+          <th pSortableColumn="price" class="text-right" style="width: 18%">
+            Precio (USDT)
+            <p-sortIcon field="price" />
+          </th>
+          <th class="text-right" style="width: 12%">Distancia</th>
+          <th pSortableColumn="strength" class="text-right" style="width: 18%">
+            Fuerza
+            <p-sortIcon field="strength" />
+          </th>
+          <th pSortableColumn="touches" class="text-right" style="width: 10%">
+            Toques
+            <p-sortIcon field="touches" />
+          </th>
+          <th style="width: 20%">Método</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-level>
+        <tr>
+          <td>
+            <p-togglebutton
+              [(ngModel)]="level.active"
+              onIcon="pi pi-check"
+              offIcon="pi pi-times"
+            />
+          </td>
+          <td>
+            <p-tag
+              [severity]="getTypeColor(level.type)"
+              [value]="level.type"
+              [rounded]="true"
+              [icon]="level.type === 'SUPPORT' ? 'pi pi-arrow-down' : 'pi pi-arrow-up'"
+            />
+          </td>
+          <td class="text-right">
+            <span class="text-lg font-bold">
+              ${{ formatNumber(level.price, 2) }}
+            </span>
+          </td>
+          <td class="text-right">
+            <span class="font-semibold">
+              {{ formatDistance(level) }}
+            </span>
+          </td>
+          <td class="text-right">
+            <div class="flex items-center justify-end gap-2">
+              <div class="flex-1 bg-surface-200 dark:bg-surface-700 rounded-full h-2 max-w-[100px]">
+                <div
+                  class="h-2 rounded-full transition-all"
+                  [style.width.%]="level.strength"
+                  [class.bg-green-500]="level.strength >= 70"
+                  [class.bg-orange-500]="level.strength >= 40 && level.strength < 70"
+                  [class.bg-gray-400]="level.strength < 40"
+                ></div>
+              </div>
+              <p-tag
+                [severity]="getStrengthColor(level.strength)"
+                [value]="level.strength.toString()"
+                class="min-w-[50px]"
+              />
+            </div>
+          </td>
+          <td class="text-right">
+            <span class="font-bold">{{ level.touches }}</span>
+          </td>
+          <td>
+            <span class="text-xs font-medium px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
+              {{ level.method }}
+            </span>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center p-8">
+            <i class="pi pi-info-circle text-4xl mb-3 opacity-50"></i>
+            <p class="text-lg">No hay niveles calculados</p>
+            <p class="text-sm opacity-70">Configure los parámetros y haga clic en "Calcular Niveles"</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- Empty State -->
+  <p-card class="shadow-sm" *ngIf="levels.length === 0 && !calculating()">
+    <div class="flex flex-col items-center justify-center p-12 text-center">
+      <i class="pi pi-calculator text-6xl mb-4 text-primary opacity-50"></i>
+      <h3 class="text-xl font-bold mb-2">Comience a Calcular Niveles</h3>
+      <p class="opacity-70 mb-4">Configure los parámetros de cálculo y haga clic en "Calcular Niveles"</p>
+    </div>
+  </p-card>
+</div>
