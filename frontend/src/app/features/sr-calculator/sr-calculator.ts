@@ -108,9 +108,8 @@ export class SRCalculator implements OnInit {
 
   loadCurrentPrice() {
     this.loading.set(true);
-    const apiUrl = 'http://localhost:3000/api';
 
-    this.http.get<any>(`${apiUrl}/market/ticker/${this.params.symbol}`).subscribe({
+    this.http.get<any>(`/api/market/ticker/${this.params.symbol}`).subscribe({
       next: (data) => {
         this.currentPrice = data.price;
         this.loading.set(false);
@@ -125,38 +124,43 @@ export class SRCalculator implements OnInit {
 
   calculateLevels() {
     this.calculating.set(true);
-    const apiUrl = 'http://localhost:3000/api';
 
-    // Construir parámetros de la petición
-    const queryParams = new URLSearchParams({
+    // Preparar el body de la petición
+    const body = {
       symbol: this.params.symbol,
-      timeframe: this.params.timeframe,
-      lookback: this.params.lookbackPeriod.toString(),
-      minTouches: this.params.minTouches.toString(),
-      threshold: this.params.priceThreshold.toString()
-    });
+      timeframes: [this.params.timeframe],
+      minStrength: 0 // Obtenemos todos los niveles sin filtrar por fuerza mínima
+    };
 
-    this.http.get<any>(`${apiUrl}/levels/calculate?${queryParams.toString()}`).subscribe({
+    this.http.post<any>('/api/levels/calculate', body).subscribe({
       next: (data) => {
-        // Convertir los niveles recibidos y marcarlos como activos por defecto
-        this.levels = (data.levels || []).map((level: any) => ({
-          ...level,
-          active: true
-        }));
+        // El backend devuelve { symbol, timeframes, results: { '1h': { count, levels } } }
+        const timeframeData = data.results[this.params.timeframe];
+
+        if (timeframeData && timeframeData.levels) {
+          // Convertir los niveles recibidos y marcarlos como activos por defecto
+          this.levels = timeframeData.levels.map((level: any) => ({
+            ...level,
+            active: true
+          }));
+        } else {
+          this.levels = [];
+        }
+
         this.calculating.set(false);
       },
       error: (err) => {
         console.error('Error calculating levels:', err);
+        this.levels = [];
         this.calculating.set(false);
       }
     });
   }
 
   saveLevels() {
-    const apiUrl = 'http://localhost:3000/api';
     const activeLevels = this.levels.filter(l => l.active);
 
-    this.http.post(`${apiUrl}/levels/save`, {
+    this.http.post('/api/levels/save', {
       symbol: this.params.symbol,
       timeframe: this.params.timeframe,
       levels: activeLevels,
