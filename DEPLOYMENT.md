@@ -4,12 +4,13 @@
 
 ### 1. Configurar URL del Backend
 
-Edita el archivo: `frontend/src/environments/environment.production.ts`
+El archivo ya está configurado con la URL correcta:
 
+**`frontend/src/environments/environment.production.ts`**
 ```typescript
 export const environment = {
   production: true,
-  apiUrl: 'https://TU-APP-BACKEND.onrender.com/api' // ← Cambia esto
+  apiUrl: 'https://strata-trader-api.onrender.com/api'
 };
 ```
 
@@ -20,12 +21,14 @@ export const environment = {
    - **Framework Preset**: Angular
    - **Root Directory**: `frontend`
    - **Build Command**: `npm run build`
-   - **Output Directory**: `dist/frontend`
+   - **Output Directory**: `dist/frontend/browser`
 
 3. Variables de entorno en Vercel (opcional):
    - No es necesario agregar variables de entorno si editaste el archivo `environment.production.ts`
 
-4. Despliega automáticamente con cada push a la rama `main`
+4. El archivo `vercel.json` ya está configurado para manejar las rutas de Angular
+
+5. Despliega automáticamente con cada push a la rama `main`
 
 ### 3. Verificar Despliegue
 
