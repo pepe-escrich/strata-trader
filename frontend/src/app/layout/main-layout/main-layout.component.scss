@@ -1,6 +1,6 @@
 .main-layout {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   height: 100vh;
   background: #f8f9fa;
   overflow: hidden;
@@ -72,14 +72,11 @@
   }
 }
 
-// Content (calculado: 100vh - header - footer)
-// Header ~56-60px, Footer ~64-72px = Total ~120-132px
+// Content (ocupa todo el espacio restante con grid)
 .content {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 56px - 64px); // Restar altura aprox de header y footer
-  flex-shrink: 0;
 }
 
 // Bottom Navigation (altura: 8px padding-top + ~48px contenido + 8px padding-bottom = ~64px)
