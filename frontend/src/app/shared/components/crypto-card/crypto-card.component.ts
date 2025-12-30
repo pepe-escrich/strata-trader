@@ -23,11 +23,13 @@ import { CryptoPair } from '../../models/crypto-pair.model';
     .crypto-card {
       border-radius: 24px;
       padding: 24px;
-      min-height: 240px;
+      height: 100%;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
       color: white;
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .crypto-card::before {
@@ -44,6 +46,10 @@ import { CryptoPair } from '../../models/crypto-pair.model';
     .card-content {
       position: relative;
       z-index: 1;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
     }
 
     .card-header {

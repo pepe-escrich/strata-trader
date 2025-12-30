@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CryptoPairsService } from '../../shared/services/crypto-pairs.service';
+import { ActivePairService } from '../../shared/services/active-pair.service';
 import { ViewerComponent } from '../../features/viewer/viewer.component';
 import { LevelsComponent } from '../../features/levels/levels.component';
 import { OrdersComponent } from '../../features/orders/orders.component';
@@ -16,7 +17,10 @@ export class MainLayoutComponent {
   showSettingsDrawer = signal(false);
   activeTab = signal('viewer');
 
-  constructor(public pairsService: CryptoPairsService) {}
+  constructor(
+    public pairsService: CryptoPairsService,
+    public activePairService: ActivePairService
+  ) {}
 
   setActiveTab(tab: string): void {
     this.activeTab.set(tab);

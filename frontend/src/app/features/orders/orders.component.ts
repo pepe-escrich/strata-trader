@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CryptoPairsService } from '../../shared/services/crypto-pairs.service';
+import { ActivePairService } from '../../shared/services/active-pair.service';
 import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-card.component';
 
 @Component({
@@ -125,8 +126,7 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
   `,
   styles: [`
     .orders-container {
-      padding: 20px;
-      min-height: calc(100vh - 160px);
+      height: 100%;
       display: flex;
       flex-direction: column;
     }
@@ -134,7 +134,7 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
     .cards-wrapper {
       flex: 1;
       display: flex;
-      align-items: center;
+      align-items: stretch;
       overflow: hidden;
     }
 
@@ -146,6 +146,7 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       width: 100%;
+      height: 100%;
 
       &::-webkit-scrollbar {
         display: none;
@@ -156,6 +157,10 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
       flex: 0 0 100%;
       scroll-snap-align: start;
       scroll-snap-stop: always;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
     }
 
     .card-details {
@@ -376,11 +381,31 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
     }
   `]
 })
-export class OrdersComponent {
+export class OrdersComponent implements OnInit {
   currentIndex = signal(0);
   activeTab = signal<'active' | 'history'>('active');
 
-  constructor(public pairsService: CryptoPairsService) {}
+  constructor(
+    public pairsService: CryptoPairsService,
+    private activePairService: ActivePairService
+  ) {
+    // Actualizar par activo cuando cambie el índice
+    effect(() => {
+      const index = this.currentIndex();
+      const pairs = this.pairsService.enabledPairs();
+      if (pairs.length > 0 && index < pairs.length) {
+        this.activePairService.setActivePair(pairs[index]);
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    // Inicializar con el primer par habilitado
+    const pairs = this.pairsService.enabledPairs();
+    if (pairs.length > 0) {
+      this.activePairService.setActivePair(pairs[0]);
+    }
+  }
 
   onScroll(event: Event): void {
     const container = event.target as HTMLElement;

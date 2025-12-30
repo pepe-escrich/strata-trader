@@ -1,7 +1,15 @@
 <div class="main-layout">
   <!-- Header -->
-  <header class="header">
-    <h1 class="logo">StrataTrader</h1>
+  <header class="header" [style.background]="activePairService.currentPair()?.gradient || '#667eea'">
+    <div class="header-left">
+      <h1 class="logo">StrataTrader</h1>
+      @if (activePairService.currentPair()) {
+        <div class="current-pair">
+          <span class="pair-icon">{{ activePairService.currentPair()!.icon }}</span>
+          <span class="pair-name">{{ activePairService.currentPair()!.name }}</span>
+        </div>
+      }
+    </div>
     <button class="settings-btn" (click)="toggleSettings()">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
         <line x1="3" y1="6" x2="21" y2="6" stroke-width="2"/>
@@ -25,7 +33,7 @@
   </main>
 
   <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
+  <nav class="bottom-nav" [style.background]="activePairService.currentPair()?.gradient || '#667eea'">
     <button
       class="nav-item"
       [class.active]="activeTab() === 'viewer'"
