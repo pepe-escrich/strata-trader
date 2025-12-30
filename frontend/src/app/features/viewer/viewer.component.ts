@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { createChart, CandlestickData } from 'lightweight-charts';
+import { createChart, CandlestickData, CandlestickSeriesOptions } from 'lightweight-charts';
 import { CryptoPairsService } from '../../shared/services/crypto-pairs.service';
 import { ActivePairService } from '../../shared/services/active-pair.service';
 import { BingxMarketService } from '../../shared/services/bingx-market.service';
@@ -516,7 +516,10 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
       debugLog += `✅ Chart creado (${typeof this.chart})\n`;
+      debugLog += `  Chart keys: ${Object.keys(this.chart).slice(0, 10).join(', ')}\n`;
+      debugLog += `  addCandlestickSeries exists: ${typeof this.chart.addCandlestickSeries}\n`;
 
+      // Usar la sintaxis correcta para lightweight-charts v5
       this.candleSeries = this.chart.addCandlestickSeries({
         upColor: '#10b981',
         downColor: '#ef4444',
