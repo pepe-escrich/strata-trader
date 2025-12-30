@@ -38,6 +38,28 @@ export class BingxService {
   }
 
   /**
+   * Convert standard symbol format (BTCUSDT) to BingX format (BTC-USDT)
+   */
+  private formatSymbol(symbol: string): string {
+    // Si ya tiene guión, retornar tal cual
+    if (symbol.includes('-')) {
+      return symbol;
+    }
+
+    // Convertir BTCUSDT a BTC-USDT
+    // Detectar si termina en USDT o USDC
+    if (symbol.endsWith('USDT')) {
+      return symbol.replace('USDT', '-USDT');
+    } else if (symbol.endsWith('USDC')) {
+      return symbol.replace('USDC', '-USDC');
+    }
+
+    // Si no tiene formato reconocido, retornar tal cual
+    this.logger.warn(`Symbol ${symbol} does not match expected format`);
+    return symbol;
+  }
+
+  /**
    * Generate signature for authenticated requests
    */
   private generateSignature(params: Record<string, any>): string {
@@ -155,12 +177,13 @@ export class BingxService {
     startTime?: number,
     endTime?: number,
   ): Promise<Candle[]> {
+    const formattedSymbol = this.formatSymbol(symbol);
     this.logger.debug(
-      `Fetching candles for ${symbol} - Interval: ${interval}, Limit: ${limit}`,
+      `Fetching candles for ${formattedSymbol} - Interval: ${interval}, Limit: ${limit}`,
     );
 
     const params: Record<string, any> = {
-      symbol,
+      symbol: formattedSymbol,
       interval,
       limit,
     };
@@ -188,10 +211,11 @@ export class BingxService {
    * Get latest price for a symbol
    */
   async getTicker(symbol: string): Promise<Ticker> {
-    this.logger.debug(`Fetching ticker for ${symbol}`);
+    const formattedSymbol = this.formatSymbol(symbol);
+    this.logger.debug(`Fetching ticker for ${formattedSymbol}`);
 
     const response = await this.get<any>('/openApi/swap/v2/quote/ticker', {
-      symbol,
+      symbol: formattedSymbol,
     });
 
     return {
@@ -234,15 +258,16 @@ export class BingxService {
    * Get order book depth
    */
   async getOrderBook(symbol: string, limit: number = 100): Promise<OrderBook> {
-    this.logger.debug(`Fetching order book for ${symbol} - Limit: ${limit}`);
+    const formattedSymbol = this.formatSymbol(symbol);
+    this.logger.debug(`Fetching order book for ${formattedSymbol} - Limit: ${limit}`);
 
     const response = await this.get<any>('/openApi/swap/v2/quote/depth', {
-      symbol,
+      symbol: formattedSymbol,
       limit,
     });
 
     return {
-      symbol,
+      symbol: formattedSymbol,
       bids: response.bids.map(([price, quantity]: [string, string]) => ({
         price: parseFloat(price),
         quantity: parseFloat(quantity),
