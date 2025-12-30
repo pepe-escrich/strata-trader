@@ -1,186 +1,205 @@
-# Strata Trader
+# StrataTrader - Clean Base Project
 
-Bot de trading de criptomonedas con análisis técnico automatizado y gestión de riesgos.
-
-## 🎯 Descripción
-
-Strata Trader es una aplicación de trading automatizado para criptomonedas que utiliza análisis técnico para identificar oportunidades de trading basadas en:
-- Puntos de soporte y resistencia
-- Divergencias alcistas y bajistas
-- Gestión automática de stop loss y take profit
-- Sistema de alertas y órdenes supervisadas
+Aplicación de trading de criptomonedas con arquitectura limpia.
 
 ## 🏗️ Arquitectura
 
-El proyecto está dividido en dos módulos principales:
+### Frontend (Angular 21)
+- **Framework**: Angular 21 standalone components
+- **Dependencias**: Solo Angular core
+- **Estado**: Aplicación vacía lista para desarrollo
 
 ### Backend (NestJS)
-- API RESTful para gestión de trading
-- Cálculo de indicadores técnicos
-- Integración con BingX API
-- Motor de backtesting
-- Base de datos MongoDB (futuro)
+- **Framework**: NestJS
+- **Integraciones**:
+  - ✅ BingX API (trading de criptomonedas)
+  - ✅ MongoDB (base de datos)
+- **Estado**: API base con integraciones listas
 
-### Frontend (Angular)
-- Interfaz de usuario con PrimeNG
-- Estilos con Tailwind CSS
-- Visualización de datos en tiempo real
-- Panel de control de órdenes
-- Sistema de alertas
+---
 
-## 📋 Funcionalidades
-
-### ✅ Fase 1: Infraestructura Base (Completa)
-- ✅ Integración con BingX API
-- ✅ Market data service con caché inteligente
-- ✅ Dashboard con precios en vivo
-- ✅ REST API endpoints para datos de mercado
-
-### ✅ Fase 2: Soporte y Resistencia (Completa)
-- ✅ Calculador de Pivot Points (Standard, Fibonacci, Camarilla)
-- ✅ Calculador de Swing Levels (highs/lows con agrupación)
-- ✅ Calculador de Volume Profile (POC, VAH, VAL)
-- ✅ Sistema de scoring de fortaleza (0-100)
-- ✅ Detección de confluencia entre métodos
-- ✅ API REST completa con 6 endpoints
-- ✅ Viewer interactivo con filtros
-- ✅ Análisis multi-timeframe
-
-### 🚧 Próximas Fases
-- ⏳ Fase 3: Detección de divergencias (RSI, MACD)
-- ⏳ Fase 4: Gestión de órdenes con risk management
-- ⏳ Fase 5: Sistema de alertas
-- ⏳ Fase 6: Backtesting de estrategias
-
-## 🚀 Inicio Rápido
+## 📦 Instalación
 
 ### Requisitos
-- Node.js >= 18.x
-- npm >= 9.x
-- MongoDB (opcional, para persistencia)
+- Node.js 18+
+- npm 10+
+- MongoDB (local o Atlas)
 
-### Instalación Completa
+### Backend
 
 ```bash
-# Clonar repositorio
-git clone <repo-url>
-cd strata-trader
-
-# Backend
 cd backend
-cp .env.example .env
-# Configurar BINGX_API_KEY y BINGX_SECRET_KEY en .env
 npm install
-npm run start:dev
-# Backend corriendo en http://localhost:3000
-
-# Frontend (en otra terminal)
-cd ../frontend
-npm install
-npm start
-# Frontend corriendo en http://localhost:4200
 ```
 
-### Acceder a la Aplicación
-
-- **Dashboard**: http://localhost:4200/dashboard
-  - Precios en vivo de criptomonedas
-  - Niveles S/R cercanos de BTC-USDT
-
-- **Levels Viewer**: http://localhost:4200/levels
-  - Vista completa de niveles S/R
-  - Filtros por símbolo, timeframe y fortaleza
-  - Análisis de fortaleza por categorías
-
-### API Backend
-
-El backend expone una API REST en `http://localhost:3000/api`:
-
-```bash
-# Obtener niveles S/R de BTC-USDT
-curl http://localhost:3000/api/levels/BTC-USDT?timeframe=1h
-
-# Ver todos los endpoints disponibles
-curl http://localhost:3000/api/market/symbols
-```
-
-Ver [documentación completa de la API](doc/backend/SUPPORT_RESISTANCE.md#api-endpoints) para todos los endpoints.
-
-## 📚 Documentación
-
-La documentación completa del proyecto se encuentra en el directorio `/doc`:
-
-### Documentación General
-- [Visión General](doc/OVERVIEW.md)
-- [Arquitectura](doc/ARCHITECTURE.md)
-- [Funcionalidades](doc/FEATURES.md)
-- [Roadmap](doc/ROADMAP.md)
-- [Quick Start](QUICK_START.md)
-
-### Documentación Técnica
-- **Backend**:
-  - [Módulos Backend](doc/backend/MODULES.md)
-  - [Support & Resistance](doc/backend/SUPPORT_RESISTANCE.md) 🆕
-- **Frontend**:
-  - [Componentes Frontend](doc/frontend/COMPONENTS.md)
-  - [Levels Viewer](doc/frontend/LEVELS_VIEWER.md) 🆕
-- **Trading**:
-  - [Estrategia de Trading](doc/trading/STRATEGY.md)
-
-### Resúmenes por Fase
-- [Fase 2 - Resumen Ejecutivo](doc/PHASE2_SUMMARY.md) 🆕
-
-## 🔑 Configuración
-
-### BingX API
-El proyecto utiliza la plataforma BingX con créditos de prueba (VST). Configura tus credenciales en el archivo `.env`:
-
+**Variables de entorno** (`.env`):
 ```env
-BINGX_API_KEY=tu_api_key
-BINGX_SECRET_KEY=tu_secret_key
-BINGX_TESTNET=true
+# App
+NODE_ENV=development
+PORT=3000
+
+# MongoDB
+MONGODB_URI=mongodb://localhost:27017/strata-trader
+
+# BingX API
+BINGX_API_KEY=your_api_key
+BINGX_API_SECRET=your_api_secret
 ```
 
-## 🧪 Testing
+**Ejecutar**:
+```bash
+# Desarrollo
+npm run start:dev
+
+# Producción
+npm run build
+npm run start:prod
+```
+
+### Frontend
 
 ```bash
-# Backend
-cd backend
-npm run test
-
-# Frontend
 cd frontend
-npm run test
+npm install
 ```
 
-## 🚀 Deployment
-
-### Quick Deploy
-
-**Backend (Render):**
-1. Push código a GitHub
-2. Conecta con Render
-3. Configura variables de entorno
-4. Deploy automático
-
-**Frontend (Vercel):**
-1. Actualiza API URL en `frontend/src/environments/environment.production.ts`
-2. Push a GitHub
-3. Conecta con Vercel
-4. Deploy automático
-
-**Guía Completa:** Ver [DEPLOYMENT.md](DEPLOYMENT.md) para instrucciones detalladas paso a paso.
-
-### Verificar antes de desplegar
-
+**Ejecutar**:
 ```bash
-./scripts/verify-deployment.sh
+# Desarrollo
+npm start
+# Abre http://localhost:4200
+
+# Producción
+npm run build
+# Output en dist/frontend/browser
 ```
 
-## 📝 Licencia
+---
 
-Privado - Todos los derechos reservados
+## 🔌 API Endpoints Disponibles
 
-## 🤝 Contribución
+### Health Check
+```bash
+GET http://localhost:3000/health
+```
 
-Proyecto en desarrollo activo.
+### BingX Integration
+El módulo BingX está disponible para uso interno. Para exponerlo como API, crea un módulo que lo utilice.
+
+---
+
+## 📂 Estructura del Proyecto
+
+```
+strata-trader/
+├── backend/
+│   ├── src/
+│   │   ├── modules/
+│   │   │   └── bingx/          # Integración BingX
+│   │   ├── config/             # Configuración
+│   │   ├── app.module.ts       # Módulo principal
+│   │   └── main.ts
+│   └── package.json
+│
+└── frontend/
+    ├── src/
+    │   ├── app/
+    │   │   ├── app.ts          # Componente raíz
+    │   │   ├── app.html
+    │   │   ├── app.config.ts   # Config Angular
+    │   │   └── app.routes.ts   # Rutas
+    │   ├── styles.scss         # Estilos globales
+    │   └── main.ts
+    └── package.json
+```
+
+---
+
+## 🚀 Despliegue
+
+### Frontend (Vercel)
+1. Conecta repositorio a Vercel
+2. Configuración:
+   - **Framework**: Angular
+   - **Root Directory**: `frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist/frontend/browser`
+
+### Backend (Render)
+1. Conecta repositorio a Render
+2. Configuración:
+   - **Environment**: Node
+   - **Root Directory**: `backend`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm run start:prod`
+3. Variables de entorno:
+   - `NODE_ENV=production`
+   - `PORT=3000`
+   - `MONGODB_URI=tu_mongodb_uri`
+   - `BINGX_API_KEY=tu_api_key`
+   - `BINGX_API_SECRET=tu_api_secret`
+
+---
+
+## 🛠️ Desarrollo
+
+### Agregar Funcionalidades
+
+#### Backend (NestJS)
+```bash
+cd backend
+nest g module features/mi-feature
+nest g controller features/mi-feature
+nest g service features/mi-feature
+```
+
+#### Frontend (Angular)
+```bash
+cd frontend
+ng g c features/mi-componente --standalone
+```
+
+### Usar BingX Service
+
+```typescript
+import { BingxService } from './modules/bingx/bingx.service';
+
+// Obtener precio
+const ticker = await this.bingxService.getTicker('BTC-USDT');
+
+// Obtener velas
+const candles = await this.bingxService.getCandles('BTC-USDT', '1h', 100);
+```
+
+---
+
+## 📊 Base de Datos
+
+MongoDB está configurado y listo para usar. Para crear modelos:
+
+```typescript
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+
+@Schema()
+export class MiModelo {
+  @Prop()
+  campo: string;
+}
+
+export const MiModeloSchema = SchemaFactory.createForClass(MiModelo);
+```
+
+---
+
+## 📝 Notas
+
+- Frontend: Aplicación Angular limpia sin librerías UI
+- Backend: Solo BingX y MongoDB configurados
+- Listo para agregar funcionalidad personalizada
+- Compilación exitosa garantizada
+
+---
+
+## 📄 Licencia
+
+Privado - StrataTrader 2025
