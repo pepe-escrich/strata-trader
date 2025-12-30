@@ -1,9 +1,26 @@
-import { Controller, Get, Query, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Query, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { BingxService } from './bingx.service';
 
 @Controller('market')
 export class MarketController {
-  constructor(private readonly bingxService: BingxService) {}
+  private readonly logger = new Logger(MarketController.name);
+
+  constructor(private readonly bingxService: BingxService) {
+    this.logger.log('MarketController initialized');
+  }
+
+  @Get()
+  getInfo() {
+    return {
+      controller: 'MarketController',
+      endpoints: [
+        'GET /market/klines',
+        'GET /market/ticker',
+        'GET /market/tickers'
+      ],
+      timestamp: new Date().toISOString()
+    };
+  }
 
   @Get('klines')
   async getKlines(
@@ -13,7 +30,10 @@ export class MarketController {
     @Query('startTime') startTime?: string,
     @Query('endTime') endTime?: string,
   ) {
+    this.logger.log(`GET /market/klines - symbol: ${symbol}, interval: ${interval}, limit: ${limit}`);
+
     if (!symbol || !interval) {
+      this.logger.error('Missing required parameters: symbol or interval');
       throw new HttpException(
         'symbol and interval are required',
         HttpStatus.BAD_REQUEST,
@@ -24,26 +44,36 @@ export class MarketController {
     const startTimeNum = startTime ? parseInt(startTime, 10) : undefined;
     const endTimeNum = endTime ? parseInt(endTime, 10) : undefined;
 
-    const candles = await this.bingxService.getCandles(
-      symbol,
-      interval,
-      limitNum,
-      startTimeNum,
-      endTimeNum,
-    );
+    try {
+      const candles = await this.bingxService.getCandles(
+        symbol,
+        interval,
+        limitNum,
+        startTimeNum,
+        endTimeNum,
+      );
 
-    return {
-      code: 0,
-      msg: 'Success',
-      data: candles.map(candle => [
-        candle.timestamp,
-        candle.open.toString(),
-        candle.high.toString(),
-        candle.low.toString(),
-        candle.close.toString(),
-        candle.volume.toString(),
-      ]),
-    };
+      this.logger.log(`Successfully fetched ${candles.length} candles for ${symbol}`);
+
+      return {
+        code: 0,
+        msg: 'Success',
+        data: candles.map(candle => [
+          candle.timestamp,
+          candle.open.toString(),
+          candle.high.toString(),
+          candle.low.toString(),
+          candle.close.toString(),
+          candle.volume.toString(),
+        ]),
+      };
+    } catch (error) {
+      this.logger.error(`Error fetching candles for ${symbol}: ${error.message}`, error.stack);
+      throw new HttpException(
+        error.message || 'Failed to fetch candles from BingX',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Get('ticker')
