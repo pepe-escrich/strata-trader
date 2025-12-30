@@ -516,36 +516,43 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
       debugLog += `✅ Chart creado (${typeof this.chart})\n`;
-      debugLog += `  Chart keys: ${Object.keys(this.chart).slice(0, 10).join(', ')}\n`;
-      debugLog += `  addCandlestickSeries exists: ${typeof this.chart.addCandlestickSeries}\n`;
-      debugLog += `  addSeries exists: ${typeof this.chart.addSeries}\n`;
 
-      // Lightweight-charts v5 usa addSeries() en lugar de addCandlestickSeries()
-      try {
-        this.candleSeries = this.chart.addSeries('Candlestick', {
-          upColor: '#10b981',
-          downColor: '#ef4444',
-          borderVisible: false,
-          wickUpColor: '#10b981',
-          wickDownColor: '#ef4444',
-        });
-        debugLog += `✅ CandleSeries creado con addSeries('Candlestick')\n`;
-      } catch (e1: any) {
-        debugLog += `❌ addSeries('Candlestick') falló: ${e1.message}\n`;
-        // Intentar con la API antigua por si acaso
+      // Listar TODOS los métodos disponibles del chart
+      const allKeys = Object.keys(this.chart);
+      debugLog += `  Total keys: ${allKeys.length}\n`;
+      debugLog += `  Keys: ${allKeys.join(', ')}\n\n`;
+
+      // Probar cada método hasta encontrar el que crea la serie
+      let seriesCreated = false;
+      const options = {
+        upColor: '#10b981',
+        downColor: '#ef4444',
+        borderVisible: false,
+        wickUpColor: '#10b981',
+        wickDownColor: '#ef4444',
+      };
+
+      for (const key of allKeys) {
+        if (typeof (this.chart as any)[key] !== 'function') continue;
+
         try {
-          this.candleSeries = (this.chart as any).addCandlestickSeries({
-            upColor: '#10b981',
-            downColor: '#ef4444',
-            borderVisible: false,
-            wickUpColor: '#10b981',
-            wickDownColor: '#ef4444',
-          });
-          debugLog += `✅ CandleSeries creado con addCandlestickSeries()\n`;
-        } catch (e2: any) {
-          debugLog += `❌ addCandlestickSeries() también falló: ${e2.message}\n`;
-          throw e1; // Re-lanzar el primer error
+          const result = (this.chart as any)[key](options);
+          // Verificar si el resultado parece una serie
+          if (result && typeof result === 'object' && result.setData) {
+            this.candleSeries = result;
+            debugLog += `✅ CandleSeries creado usando chart.${key}()\n`;
+            seriesCreated = true;
+            break;
+          }
+        } catch (e: any) {
+          // Continuar probando otros métodos
         }
+      }
+
+      if (!seriesCreated) {
+        debugLog += `❌ No se pudo crear candleSeries\n`;
+        this.debugInfo.set(debugLog);
+        throw new Error('No se pudo crear la serie de velas');
       }
 
       debugLog += `✅ CandleSeries creado (${typeof this.candleSeries})\n`;
