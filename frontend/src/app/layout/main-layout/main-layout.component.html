@@ -2,12 +2,14 @@
   <!-- Header -->
   <header class="header" [style.background]="activePairService.currentPair()?.gradient || '#667eea'">
     <div class="header-left">
-      <h1 class="logo">StrataTrader</h1>
-      @if (activePairService.currentPair()) {
-        <div class="current-pair">
+      <div class="header-top">
+        @if (activePairService.currentPair()) {
           <span class="pair-icon">{{ activePairService.currentPair()!.icon }}</span>
-          <span class="pair-name">{{ activePairService.currentPair()!.name }}</span>
-        </div>
+        }
+        <h1 class="logo">StrataTrader</h1>
+      </div>
+      @if (activePairService.currentPair()) {
+        <div class="pair-name">{{ activePairService.currentPair()!.name }}</div>
       }
     </div>
     <button class="settings-btn" (click)="toggleSettings()">
