@@ -518,15 +518,35 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       debugLog += `✅ Chart creado (${typeof this.chart})\n`;
       debugLog += `  Chart keys: ${Object.keys(this.chart).slice(0, 10).join(', ')}\n`;
       debugLog += `  addCandlestickSeries exists: ${typeof this.chart.addCandlestickSeries}\n`;
+      debugLog += `  addSeries exists: ${typeof this.chart.addSeries}\n`;
 
-      // Usar la sintaxis correcta para lightweight-charts v5
-      this.candleSeries = this.chart.addCandlestickSeries({
-        upColor: '#10b981',
-        downColor: '#ef4444',
-        borderVisible: false,
-        wickUpColor: '#10b981',
-        wickDownColor: '#ef4444',
-      });
+      // Lightweight-charts v5 usa addSeries() en lugar de addCandlestickSeries()
+      try {
+        this.candleSeries = this.chart.addSeries('Candlestick', {
+          upColor: '#10b981',
+          downColor: '#ef4444',
+          borderVisible: false,
+          wickUpColor: '#10b981',
+          wickDownColor: '#ef4444',
+        });
+        debugLog += `✅ CandleSeries creado con addSeries('Candlestick')\n`;
+      } catch (e1: any) {
+        debugLog += `❌ addSeries('Candlestick') falló: ${e1.message}\n`;
+        // Intentar con la API antigua por si acaso
+        try {
+          this.candleSeries = (this.chart as any).addCandlestickSeries({
+            upColor: '#10b981',
+            downColor: '#ef4444',
+            borderVisible: false,
+            wickUpColor: '#10b981',
+            wickDownColor: '#ef4444',
+          });
+          debugLog += `✅ CandleSeries creado con addCandlestickSeries()\n`;
+        } catch (e2: any) {
+          debugLog += `❌ addCandlestickSeries() también falló: ${e2.message}\n`;
+          throw e1; // Re-lanzar el primer error
+        }
+      }
 
       debugLog += `✅ CandleSeries creado (${typeof this.candleSeries})\n`;
       debugLog += `  this.chart: ${!!this.chart}\n`;
