@@ -263,17 +263,20 @@ import {
       overflow-y: auto;
 
       span {
-        font-size: 13px;
+        font-size: 12px;
         color: #ef4444;
-        text-align: center;
+        text-align: left;
         max-width: 100%;
         word-wrap: break-word;
+        white-space: pre-wrap;
         font-family: monospace;
         background: #fee;
         padding: 12px;
         border-radius: 8px;
         border: 1px solid #fcc;
-        line-height: 1.5;
+        line-height: 1.6;
+        max-height: 80vh;
+        overflow-y: auto;
       }
 
       .retry-btn {
@@ -464,18 +467,32 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error loading chart data:', err);
-          let errorMessage = 'Error al cargar los datos del gráfico';
+          let errorMessage = 'Error al cargar los datos del gráfico\n\n';
 
-          if (err.error?.message) {
-            errorMessage += `: ${err.error.message}`;
-          } else if (err.message) {
-            errorMessage += `: ${err.message}`;
-          } else if (err.statusText) {
-            errorMessage += `: ${err.statusText}`;
+          // Información del error
+          errorMessage += `Status: ${err.status || 'unknown'}\n`;
+          errorMessage += `URL: ${err.url || 'N/A'}\n\n`;
+
+          // Mensaje del backend
+          if (err.error) {
+            if (typeof err.error === 'string') {
+              errorMessage += `Backend: ${err.error}\n`;
+            } else if (err.error.message) {
+              errorMessage += `Backend: ${err.error.message}\n`;
+            } else {
+              errorMessage += `Backend: ${JSON.stringify(err.error, null, 2)}\n`;
+            }
           }
 
-          errorMessage += ` (Status: ${err.status || 'unknown'})`;
-          errorMessage += ` URL: ${err.url || 'N/A'}`;
+          // Mensaje del cliente
+          if (err.message) {
+            errorMessage += `Client: ${err.message}\n`;
+          }
+
+          // StatusText
+          if (err.statusText && err.statusText !== 'Unknown Error') {
+            errorMessage += `StatusText: ${err.statusText}\n`;
+          }
 
           this.error.set(errorMessage);
           this.loading.set(false);
