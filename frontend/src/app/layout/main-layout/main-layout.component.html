@@ -4,7 +4,7 @@
     <div class="header-left">
       <div class="header-top">
         @if (activePairService.currentPair()) {
-          <span class="pair-icon">{{ activePairService.currentPair()!.icon }}</span>
+          <span class="pair-icon" [style.color]="activePairService.currentPair()!.color">{{ activePairService.currentPair()!.icon }}</span>
         }
         <h1 class="logo">StrataTrader</h1>
       </div>
