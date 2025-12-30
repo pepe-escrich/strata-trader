@@ -1,23 +1,23 @@
 .main-layout {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: 40px 1fr 40px;
   height: 100vh;
   background: #f8f9fa;
   overflow: hidden;
 }
 
-// Header (altura: 16px padding-top + contenido ~24px + 16px padding-bottom = ~56px)
+// Header (altura fija: 40px)
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 8px 20px;
   background: #667eea;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 100;
   transition: background 0.3s ease;
   color: white;
-  min-height: 0;
+  height: 40px;
 }
 
 .header-left {
@@ -27,7 +27,7 @@
 }
 
 .logo {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   margin: 0;
   color: white;
@@ -36,30 +36,30 @@
 .current-pair {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 4px 10px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  font-size: 14px;
+  border-radius: 16px;
+  font-size: 12px;
   font-weight: 600;
 
   .pair-icon {
-    font-size: 20px;
+    font-size: 16px;
     line-height: 1;
     font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
   }
 
   .pair-name {
-    font-size: 14px;
+    font-size: 12px;
   }
 }
 
 .settings-btn {
   background: none;
   border: none;
-  padding: 8px;
+  padding: 4px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: background 0.2s;
   color: white;
 
@@ -69,6 +69,8 @@
 
   svg {
     display: block;
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -80,15 +82,15 @@
   min-height: 0;
 }
 
-// Bottom Navigation (altura: 8px padding-top + ~48px contenido + 8px padding-bottom = ~64px)
+// Bottom Navigation (altura fija: 40px)
 .bottom-nav {
   background: #667eea;
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-around;
-  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  padding: 4px 0;
   transition: background 0.3s ease;
-  min-height: 0;
+  height: 40px;
 }
 
 .nav-item {
@@ -96,8 +98,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px;
+  gap: 2px;
+  padding: 4px;
   background: none;
   border: none;
   cursor: pointer;
@@ -106,10 +108,12 @@
 
   svg {
     stroke: currentColor;
+    width: 18px;
+    height: 18px;
   }
 
   span {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 500;
   }
 
