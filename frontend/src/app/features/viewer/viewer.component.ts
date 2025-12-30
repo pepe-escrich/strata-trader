@@ -78,9 +78,11 @@ import { ActivePairService } from '../../shared/services/active-pair.service';
       flex: 0 0 100%;
       scroll-snap-align: start;
       scroll-snap-stop: always;
-      height: 100%;
+      min-height: 100%;
       padding: 40px 20px;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
 
     .slide-content {
