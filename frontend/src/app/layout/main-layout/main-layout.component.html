@@ -1,0 +1,103 @@
+<div class="main-layout">
+  <!-- Header -->
+  <header class="header">
+    <h1 class="logo">StrataTrader</h1>
+    <button class="settings-btn" (click)="toggleSettings()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <line x1="3" y1="6" x2="21" y2="6" stroke-width="2"/>
+        <line x1="3" y1="12" x2="21" y2="12" stroke-width="2"/>
+        <line x1="3" y1="18" x2="21" y2="18" stroke-width="2"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Main Content -->
+  <main class="content">
+    @if (activeTab() === 'viewer') {
+      <app-viewer></app-viewer>
+    }
+    @if (activeTab() === 'levels') {
+      <app-levels></app-levels>
+    }
+    @if (activeTab() === 'orders') {
+      <app-orders></app-orders>
+    }
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button
+      class="nav-item"
+      [class.active]="activeTab() === 'viewer'"
+      (click)="setActiveTab('viewer')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+        <path d="M9 3v18M15 3v18M3 9h18M3 15h18" stroke-width="2"/>
+      </svg>
+      <span>Visor</span>
+    </button>
+
+    <button
+      class="nav-item"
+      [class.active]="activeTab() === 'levels'"
+      (click)="setActiveTab('levels')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M3 17l6-6 4 4 8-8" stroke-width="2" stroke-linecap="round"/>
+        <polyline points="17 7 21 7 21 11" stroke-width="2" stroke-linecap="round"/>
+        <line x1="3" y1="17" x2="21" y2="17" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>Niveles</span>
+    </button>
+
+    <button
+      class="nav-item"
+      [class.active]="activeTab() === 'orders'"
+      (click)="setActiveTab('orders')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke-width="2"/>
+        <polyline points="14 2 14 8 20 8" stroke-width="2"/>
+        <line x1="9" y1="15" x2="15" y2="15" stroke-width="2"/>
+        <line x1="9" y1="11" x2="12" y2="11" stroke-width="2"/>
+      </svg>
+      <span>Órdenes</span>
+    </button>
+  </nav>
+
+  <!-- Settings Drawer -->
+  @if (showSettingsDrawer()) {
+    <div class="drawer-overlay" (click)="toggleSettings()">
+      <div class="drawer" (click)="$event.stopPropagation()">
+        <div class="drawer-header">
+          <h2>Gestionar Pares</h2>
+          <button class="close-btn" (click)="toggleSettings()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="18" y1="6" x2="6" y2="18" stroke-width="2"/>
+              <line x1="6" y1="6" x2="18" y2="18" stroke-width="2"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="drawer-content">
+          @for (pair of pairsService.allPairs(); track pair.symbol) {
+            <div class="pair-item">
+              <div class="pair-info">
+                <span class="pair-icon">{{ pair.icon }}</span>
+                <div>
+                  <div class="pair-name">{{ pair.name }}</div>
+                  <div class="pair-symbol">{{ pair.symbol }}</div>
+                </div>
+              </div>
+              <label class="toggle">
+                <input
+                  type="checkbox"
+                  [checked]="pair.enabled"
+                  (change)="togglePair(pair.symbol)">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>
