@@ -433,14 +433,23 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     // Inicializar con el primer par habilitado
     const pairs = this.pairsService.enabledPairs();
+    let debugLog = `[ngOnInit] Pares habilitados: ${pairs.length}\n`;
     if (pairs.length > 0) {
       this.activePairService.setActivePair(pairs[0]);
+      debugLog += `Par activo: ${pairs[0].symbol}\n`;
     }
+    this.debugInfo.set(debugLog);
   }
 
   ngAfterViewInit(): void {
+    let debugLog = this.debugInfo() + `[ngAfterViewInit] Iniciando...\n`;
+    debugLog += `chartContainer disponible: ${!!this.chartContainer}\n`;
+    this.debugInfo.set(debugLog);
+
     // Usar setTimeout para asegurar que el DOM esté completamente renderizado
     setTimeout(() => {
+      let log = this.debugInfo() + `[setTimeout 100ms] Ejecutando inicialización...\n`;
+      this.debugInfo.set(log);
       this.initChart();
       this.loadChartData();
       this.startAutoRefresh();
@@ -458,10 +467,11 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initChart(): void {
-    let debugLog = `[INIT CHART] Iniciando...\n`;
+    let debugLog = this.debugInfo() + `\n[INIT CHART] Iniciando...\n`;
 
     if (!this.chartContainer) {
       debugLog += `❌ chartContainer no disponible\n`;
+      debugLog += `  ViewChild: ${this.chartContainer}\n`;
       this.debugInfo.set(debugLog);
       console.error('chartContainer is not available');
       return;
@@ -474,6 +484,8 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (container.clientWidth === 0 || container.clientHeight === 0) {
       debugLog += `❌ Container sin dimensiones\n`;
+      debugLog += `  width: ${container.clientWidth}\n`;
+      debugLog += `  height: ${container.clientHeight}\n`;
       this.debugInfo.set(debugLog);
       console.error('Container has no dimensions');
       return;
@@ -497,7 +509,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
         },
       });
 
-      debugLog += `✅ Chart creado\n`;
+      debugLog += `✅ Chart creado (${typeof this.chart})\n`;
 
       this.candleSeries = this.chart.addCandlestickSeries({
         upColor: '#10b981',
@@ -507,7 +519,9 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
         wickDownColor: '#ef4444',
       });
 
-      debugLog += `✅ CandleSeries creado\n`;
+      debugLog += `✅ CandleSeries creado (${typeof this.candleSeries})\n`;
+      debugLog += `  this.chart: ${!!this.chart}\n`;
+      debugLog += `  this.candleSeries: ${!!this.candleSeries}\n`;
 
       // Responsive resize
       this.resizeObserver = new ResizeObserver(entries => {
@@ -528,6 +542,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     } catch (error: any) {
       debugLog += `❌ Error al crear chart: ${error.message}\n`;
+      debugLog += `  Stack: ${error.stack}\n`;
       this.debugInfo.set(debugLog);
       console.error('Error initializing chart:', error);
     }
@@ -541,10 +556,13 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const timestamp = new Date().toLocaleTimeString();
-    let debugLog = `[${timestamp}] Cargando datos...\n`;
+    let debugLog = this.debugInfo() + `\n[${timestamp}] Cargando datos...\n`;
     debugLog += `Par: ${currentPair.symbol}\n`;
     debugLog += `Timeframe: ${this.selectedTimeframe()}\n`;
-    debugLog += `URL API: ${this.marketService['apiUrl']}\n\n`;
+    debugLog += `URL API: ${this.marketService['apiUrl']}\n`;
+    debugLog += `Estado ANTES de petición:\n`;
+    debugLog += `  - chart: ${!!this.chart}\n`;
+    debugLog += `  - candleSeries: ${!!this.candleSeries}\n\n`;
 
     this.debugInfo.set(debugLog);
     this.loading.set(true);
@@ -559,7 +577,12 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
 
           if (candles.length > 0) {
             debugLog += `Primera vela: ${JSON.stringify(candles[0], null, 2)}\n`;
-            debugLog += `Última vela: ${JSON.stringify(candles[candles.length - 1], null, 2)}\n`;
+            debugLog += `Última vela: ${JSON.stringify(candles[candles.length - 1], null, 2)}\n\n`;
+
+            debugLog += `Estado AL RECIBIR datos:\n`;
+            debugLog += `  - chart: ${!!this.chart}\n`;
+            debugLog += `  - candleSeries: ${!!this.candleSeries}\n`;
+            debugLog += `  - candleSeries type: ${typeof this.candleSeries}\n\n`;
 
             if (this.candleSeries) {
               const data: CandlestickData[] = candles.map(c => ({
