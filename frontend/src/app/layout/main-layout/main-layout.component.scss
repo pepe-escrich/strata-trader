@@ -1,13 +1,12 @@
 .main-layout {
-  display: grid;
-  grid-template-rows: max-content 1fr max-content;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
-  max-height: 100vh;
   background: #f8f9fa;
   overflow: hidden;
 }
 
-// Header
+// Header (altura: 16px padding-top + contenido ~24px + 16px padding-bottom = ~56px)
 .header {
   display: flex;
   justify-content: space-between;
@@ -18,6 +17,7 @@
   z-index: 100;
   transition: background 0.3s ease;
   color: white;
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -72,15 +72,17 @@
   }
 }
 
-// Content
+// Content (calculado: 100vh - header - footer)
+// Header ~56-60px, Footer ~64-72px = Total ~120-132px
 .content {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 0; // Importante para grid
+  height: calc(100vh - 56px - 64px); // Restar altura aprox de header y footer
+  flex-shrink: 0;
 }
 
-// Bottom Navigation
+// Bottom Navigation (altura: 8px padding-top + ~48px contenido + 8px padding-bottom = ~64px)
 .bottom-nav {
   background: #667eea;
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.1);
@@ -88,6 +90,7 @@
   justify-content: space-around;
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
   transition: background 0.3s ease;
+  flex-shrink: 0;
 }
 
 .nav-item {
