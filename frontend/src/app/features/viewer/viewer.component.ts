@@ -413,6 +413,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   private candleSeries: any = null;
   private refreshTimer: any = null;
   private resizeObserver: ResizeObserver | null = null;
+  private chartInitialized = false;
 
   constructor(
     public pairsService: CryptoPairsService,
@@ -425,7 +426,10 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       const pairs = this.pairsService.enabledPairs();
       if (pairs.length > 0 && index < pairs.length) {
         this.activePairService.setActivePair(pairs[index]);
-        this.loadChartData();
+        // Solo cargar datos si el chart ya está inicializado
+        if (this.chartInitialized) {
+          this.loadChartData();
+        }
       }
     });
   }
@@ -533,6 +537,11 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       this.resizeObserver.observe(container);
 
       debugLog += `✅ ResizeObserver configurado\n`;
+
+      // Marcar el chart como inicializado
+      this.chartInitialized = true;
+      debugLog += `✅ Chart marcado como inicializado\n`;
+
       this.debugInfo.set(debugLog);
 
       console.log('Chart initialized successfully', {
@@ -551,7 +560,14 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   loadChartData(): void {
     const currentPair = this.activePairService.currentPair();
     if (!currentPair) {
-      this.debugInfo.set('⚠️ No hay par activo');
+      let log = this.debugInfo() + '⚠️ No hay par activo\n';
+      this.debugInfo.set(log);
+      return;
+    }
+
+    if (!this.chartInitialized) {
+      let log = this.debugInfo() + `⚠️ Chart no inicializado todavía, esperando...\n`;
+      this.debugInfo.set(log);
       return;
     }
 
@@ -561,6 +577,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
     debugLog += `Timeframe: ${this.selectedTimeframe()}\n`;
     debugLog += `URL API: ${this.marketService['apiUrl']}\n`;
     debugLog += `Estado ANTES de petición:\n`;
+    debugLog += `  - chartInitialized: ${this.chartInitialized}\n`;
     debugLog += `  - chart: ${!!this.chart}\n`;
     debugLog += `  - candleSeries: ${!!this.candleSeries}\n\n`;
 
