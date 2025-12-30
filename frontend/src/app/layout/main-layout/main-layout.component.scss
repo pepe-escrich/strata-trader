@@ -74,9 +74,7 @@
 
 // Content (ocupa todo el espacio restante con grid)
 .content {
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  overflow: auto;
   min-height: 0;
 }
 
