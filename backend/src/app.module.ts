@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
+// import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BingxModule } from './modules/bingx/bingx.module';
@@ -17,14 +17,14 @@ import bingxConfig from './config/bingx.config';
       envFilePath: '.env',
     }),
 
-    // Database (MongoDB)
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('database.uri'),
-      }),
-      inject: [ConfigService],
-    }),
+    // Database (MongoDB) - Temporalmente deshabilitado
+    // MongooseModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: async (configService: ConfigService) => ({
+    //     uri: configService.get<string>('database.uri'),
+    //   }),
+    //   inject: [ConfigService],
+    // }),
 
     // BingX integration
     BingxModule,
