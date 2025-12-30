@@ -2,15 +2,15 @@
   <!-- Header -->
   <header class="header" [style.background]="activePairService.currentPair()?.gradient || '#667eea'">
     <div class="header-left">
-      <div class="header-top">
-        @if (activePairService.currentPair()) {
-          <span class="pair-icon" [style.color]="activePairService.currentPair()!.color">{{ activePairService.currentPair()!.icon }}</span>
-        }
-        <h1 class="logo">StrataTrader</h1>
-      </div>
       @if (activePairService.currentPair()) {
-        <div class="pair-name">{{ activePairService.currentPair()!.name }}</div>
+        <span class="pair-icon" [style.color]="activePairService.currentPair()!.color">{{ activePairService.currentPair()!.icon }}</span>
       }
+      <div class="header-info">
+        <h1 class="logo">StrataTrader</h1>
+        @if (activePairService.currentPair()) {
+          <div class="pair-name">{{ activePairService.currentPair()!.name }}</div>
+        }
+      </div>
     </div>
     <button class="settings-btn" (click)="toggleSettings()">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">

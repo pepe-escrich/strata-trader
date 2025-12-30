@@ -25,14 +25,14 @@
 
 .header-left {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 12px;
 }
 
-.header-top {
+.header-info {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .pair-icon {
