@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { createChart, IChartApi, ISeriesApi, CandlestickData } from 'lightweight-charts';
+import { createChart, CandlestickData } from 'lightweight-charts';
 import { CryptoPairsService } from '../../shared/services/crypto-pairs.service';
 import { ActivePairService } from '../../shared/services/active-pair.service';
 import { BingxMarketService } from '../../shared/services/bingx-market.service';
@@ -342,8 +342,8 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   timeframeOptions = TIMEFRAME_OPTIONS;
   refreshOptions = REFRESH_INTERVAL_OPTIONS;
 
-  private chart: IChartApi | null = null;
-  private candleSeries: ISeriesApi<'Candlestick'> | null = null;
+  private chart: any = null;
+  private candleSeries: any = null;
   private refreshTimer: any = null;
   private resizeObserver: ResizeObserver | null = null;
 
