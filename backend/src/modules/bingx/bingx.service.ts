@@ -32,31 +32,19 @@ export class BingxService {
   ) {
     this.apiKey = this.configService.get<string>('bingx.apiKey');
     this.secretKey = this.configService.get<string>('bingx.secretKey');
-    this.baseUrl = this.configService.get<string>('bingx.baseUrl');
-    this.timeout = this.configService.get<number>('bingx.timeout');
-    this.retryAttempts = this.configService.get<number>('bingx.retryAttempts');
+    // Use Binance API instead of BingX
+    this.baseUrl = 'https://api.binance.com';
+    this.timeout = this.configService.get<number>('bingx.timeout') || 10000;
+    this.retryAttempts = this.configService.get<number>('bingx.retryAttempts') || 3;
   }
 
   /**
-   * Convert standard symbol format (BTCUSDT) to BingX format (BTC-USDT)
+   * Convert symbol to Binance format (BTCUSDT - no hyphen)
    */
   private formatSymbol(symbol: string): string {
-    // Si ya tiene guión, retornar tal cual
-    if (symbol.includes('-')) {
-      return symbol;
-    }
-
-    // Convertir BTCUSDT a BTC-USDT
-    // Detectar si termina en USDT o USDC
-    if (symbol.endsWith('USDT')) {
-      return symbol.replace('USDT', '-USDT');
-    } else if (symbol.endsWith('USDC')) {
-      return symbol.replace('USDC', '-USDC');
-    }
-
-    // Si no tiene formato reconocido, retornar tal cual
-    this.logger.warn(`Symbol ${symbol} does not match expected format`);
-    return symbol;
+    // Binance uses symbols without hyphens (e.g., BTCUSDT)
+    // Remove any hyphens if present
+    return symbol.replace('-', '').toUpperCase();
   }
 
   /**
@@ -201,22 +189,43 @@ export class BingxService {
     if (startTime) params.startTime = startTime;
     if (endTime) params.endTime = endTime;
 
-    this.logger.log(`[getCandles] Params to BingX: ${JSON.stringify(params)}`);
+    this.logger.log(`[getCandles] Params to Binance: ${JSON.stringify(params)}`);
 
-    const rawCandles = await this.get<any[]>(
-      '/openApi/swap/v3/quote/klines',
-      params,
-    );
+    try {
+      // Binance API returns data directly, not wrapped in {code, msg, data}
+      const url = `${this.baseUrl}/api/v3/klines`;
+      this.logger.log(`[Binance GET] URL: ${url}`);
+      this.logger.log(`[Binance GET] Params: ${JSON.stringify(params)}`);
 
-    // Transform BingX format to our Candle interface
-    return rawCandles.map((candle) => ({
-      timestamp: parseInt(candle.time),
-      open: parseFloat(candle.open),
-      high: parseFloat(candle.high),
-      low: parseFloat(candle.low),
-      close: parseFloat(candle.close),
-      volume: parseFloat(candle.volume),
-    }));
+      const response = await firstValueFrom(
+        this.httpService.get<any[]>(url, {
+          params,
+          timeout: this.timeout,
+        }),
+      );
+
+      this.logger.log(`[Binance GET] Received ${response.data.length} candles`);
+
+      // Transform Binance format to our Candle interface
+      // Binance format: [openTime, open, high, low, close, volume, closeTime, ...]
+      return response.data.map((candle: any[]) => ({
+        timestamp: candle[0], // Open time in milliseconds
+        open: parseFloat(candle[1]),
+        high: parseFloat(candle[2]),
+        low: parseFloat(candle[3]),
+        close: parseFloat(candle[4]),
+        volume: parseFloat(candle[5]),
+      }));
+    } catch (error) {
+      this.logger.error(`[Binance GET] Error: ${error.message}`);
+      if (error.response?.data) {
+        this.logger.error(`[Binance GET] Error response: ${JSON.stringify(error.response.data)}`);
+      }
+      throw new HttpException(
+        error.response?.data?.msg || error.message || 'Binance API request failed',
+        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   /**
