@@ -102,16 +102,14 @@ import {
       }
 
       <!-- Panel de Debug -->
-      @if (debugInfo()) {
-        <div class="debug-panel">
-          <button class="debug-toggle" (click)="toggleDebug()">
-            {{ showDebug() ? '🔽' : '▶️' }} Debug
-          </button>
-          @if (showDebug()) {
-            <pre class="debug-content">{{ debugInfo() }}</pre>
-          }
-        </div>
-      }
+      <div class="debug-panel">
+        <button class="debug-toggle" (click)="toggleDebug()">
+          {{ showDebug() ? '🔽' : '▶️' }} Debug
+        </button>
+        @if (showDebug()) {
+          <pre class="debug-content">{{ debugInfo() || 'Esperando logs...' }}</pre>
+        }
+      </div>
     </div>
   `,
   styles: [`
