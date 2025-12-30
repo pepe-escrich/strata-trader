@@ -1,8 +1,10 @@
 .main-layout {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: max-content 1fr max-content;
   height: 100vh;
+  max-height: 100vh;
   background: #f8f9fa;
+  overflow: hidden;
 }
 
 // Header
