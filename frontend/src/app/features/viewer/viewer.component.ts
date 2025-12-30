@@ -1,31 +1,84 @@
-import { Component, signal, OnInit, effect } from '@angular/core';
+import {
+  Component,
+  signal,
+  OnInit,
+  OnDestroy,
+  effect,
+  ElementRef,
+  ViewChild,
+  AfterViewInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { createChart, IChartApi, ISeriesApi, CandlestickData } from 'lightweight-charts';
 import { CryptoPairsService } from '../../shared/services/crypto-pairs.service';
 import { ActivePairService } from '../../shared/services/active-pair.service';
+import { BingxMarketService } from '../../shared/services/bingx-market.service';
+import {
+  Timeframe,
+  RefreshInterval,
+  TIMEFRAME_OPTIONS,
+  REFRESH_INTERVAL_OPTIONS,
+} from '../../shared/models/candlestick.model';
 
 @Component({
   selector: 'app-viewer',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HttpClientModule],
+  providers: [BingxMarketService],
   template: `
     <div class="viewer-container">
       <div class="cards-scroll" (scroll)="onScroll($event)">
         @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
           <div class="slide" [class.active]="currentIndex() === idx" [style.background]="getLightBackground(pair.color)">
             <div class="slide-content">
-              <div class="price">
-                <span class="label">Precio Actual</span>
-                <span class="value">$--,---</span>
+              <!-- Controles -->
+              <div class="controls">
+                <div class="control-group">
+                  <label>Temporalidad:</label>
+                  <div class="button-group">
+                    @for (option of timeframeOptions; track option.value) {
+                      <button
+                        class="control-btn"
+                        [class.active]="selectedTimeframe() === option.value"
+                        (click)="setTimeframe(option.value)"
+                        [disabled]="loading()">
+                        {{ option.label }}
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <label>Actualización:</label>
+                  <div class="button-group">
+                    @for (option of refreshOptions; track option.value) {
+                      <button
+                        class="control-btn"
+                        [class.active]="refreshInterval() === option.value"
+                        (click)="setRefreshInterval(option.value)">
+                        {{ option.label }}
+                      </button>
+                    }
+                  </div>
+                </div>
               </div>
-              <div class="stats">
-                <div class="stat">
-                  <span class="label">24h</span>
-                  <span class="value positive">+0.00%</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Vol</span>
-                  <span class="value">$--M</span>
-                </div>
+
+              <!-- Gráfico -->
+              <div class="chart-wrapper">
+                @if (loading()) {
+                  <div class="loading">
+                    <div class="spinner"></div>
+                    <span>Cargando datos...</span>
+                  </div>
+                }
+                @if (error()) {
+                  <div class="error">
+                    <span>❌ {{ error() }}</span>
+                    <button class="retry-btn" (click)="loadChartData()">Reintentar</button>
+                  </div>
+                }
+                <div #chartContainer class="chart-container"></div>
               </div>
             </div>
           </div>
@@ -80,58 +133,157 @@ import { ActivePairService } from '../../shared/services/active-pair.service';
       scroll-snap-align: start;
       scroll-snap-stop: always;
       height: 100%;
-      padding: 40px 20px;
+      padding: 20px;
       overflow-y: auto;
     }
 
     .slide-content {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    .price {
+      max-width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-bottom: 20px;
-
-      .label {
-        font-size: 14px;
-        opacity: 0.9;
-      }
-
-      .value {
-        font-size: 36px;
-        font-weight: 700;
-      }
+      gap: 16px;
     }
 
-    .stats {
-      display: flex;
-      gap: 24px;
-    }
-
-    .stat {
+    .controls {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
 
-      .label {
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      label {
         font-size: 12px;
-        opacity: 0.8;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+      }
+    }
+
+    .button-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .control-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid #d1d5db;
+      background: white;
+      color: #374151;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover:not(:disabled) {
+        background: #f3f4f6;
+        border-color: #9ca3af;
       }
 
-      .value {
-        font-size: 16px;
-        font-weight: 600;
+      &.active {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+      }
 
-        &.positive {
-          color: #10b981;
-        }
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
 
-        &.negative {
-          color: #ef4444;
+    .chart-wrapper {
+      flex: 1;
+      position: relative;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      min-height: 400px;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    .loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 10;
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f4f6;
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      span {
+        font-size: 14px;
+        color: #6b7280;
+      }
+    }
+
+    .error {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 10;
+
+      span {
+        font-size: 14px;
+        color: #ef4444;
+      }
+
+      .retry-btn {
+        padding: 8px 16px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+
+        &:hover {
+          background: #5568d3;
         }
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
       }
     }
 
@@ -139,7 +291,7 @@ import { ActivePairService } from '../../shared/services/active-pair.service';
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin-top: 24px;
+      padding: 16px 0;
     }
 
     .dot {
@@ -176,14 +328,29 @@ import { ActivePairService } from '../../shared/services/active-pair.service';
         font-size: 14px;
       }
     }
-  `]
+  `],
 })
-export class ViewerComponent implements OnInit {
+export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('chartContainer') chartContainer!: ElementRef<HTMLDivElement>;
+
   currentIndex = signal(0);
+  selectedTimeframe = signal<Timeframe>('15m');
+  refreshInterval = signal<RefreshInterval>(30);
+  loading = signal(false);
+  error = signal<string | null>(null);
+
+  timeframeOptions = TIMEFRAME_OPTIONS;
+  refreshOptions = REFRESH_INTERVAL_OPTIONS;
+
+  private chart: IChartApi | null = null;
+  private candleSeries: ISeriesApi<'Candlestick'> | null = null;
+  private refreshTimer: any = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor(
     public pairsService: CryptoPairsService,
-    private activePairService: ActivePairService
+    private activePairService: ActivePairService,
+    private marketService: BingxMarketService
   ) {
     // Actualizar par activo cuando cambie el índice
     effect(() => {
@@ -191,6 +358,7 @@ export class ViewerComponent implements OnInit {
       const pairs = this.pairsService.enabledPairs();
       if (pairs.length > 0 && index < pairs.length) {
         this.activePairService.setActivePair(pairs[index]);
+        this.loadChartData();
       }
     });
   }
@@ -200,6 +368,120 @@ export class ViewerComponent implements OnInit {
     const pairs = this.pairsService.enabledPairs();
     if (pairs.length > 0) {
       this.activePairService.setActivePair(pairs[0]);
+    }
+  }
+
+  ngAfterViewInit(): void {
+    this.initChart();
+    this.loadChartData();
+    this.startAutoRefresh();
+  }
+
+  ngOnDestroy(): void {
+    this.stopAutoRefresh();
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+    if (this.chart) {
+      this.chart.remove();
+    }
+  }
+
+  private initChart(): void {
+    if (!this.chartContainer) return;
+
+    const container = this.chartContainer.nativeElement;
+
+    this.chart = createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
+      layout: {
+        background: { color: '#ffffff' },
+        textColor: '#333',
+      },
+      grid: {
+        vertLines: { color: '#f0f0f0' },
+        horzLines: { color: '#f0f0f0' },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+      },
+    });
+
+    this.candleSeries = this.chart.addCandlestickSeries({
+      upColor: '#10b981',
+      downColor: '#ef4444',
+      borderVisible: false,
+      wickUpColor: '#10b981',
+      wickDownColor: '#ef4444',
+    });
+
+    // Responsive resize
+    this.resizeObserver = new ResizeObserver(entries => {
+      if (this.chart && entries.length > 0) {
+        const { width, height } = entries[0].contentRect;
+        this.chart.resize(width, height);
+      }
+    });
+    this.resizeObserver.observe(container);
+  }
+
+  loadChartData(): void {
+    const currentPair = this.activePairService.currentPair();
+    if (!currentPair) return;
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.marketService
+      .getKlines(currentPair.symbol, this.selectedTimeframe(), 500)
+      .subscribe({
+        next: (candles) => {
+          if (this.candleSeries && candles.length > 0) {
+            const data: CandlestickData[] = candles.map(c => ({
+              time: c.time as any,
+              open: c.open,
+              high: c.high,
+              low: c.low,
+              close: c.close,
+            }));
+            this.candleSeries.setData(data);
+            this.chart?.timeScale().fitContent();
+          }
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Error loading chart data:', err);
+          this.error.set('Error al cargar los datos del gráfico');
+          this.loading.set(false);
+        },
+      });
+  }
+
+  setTimeframe(timeframe: Timeframe): void {
+    this.selectedTimeframe.set(timeframe);
+    this.loadChartData();
+  }
+
+  setRefreshInterval(interval: RefreshInterval): void {
+    this.refreshInterval.set(interval);
+    this.stopAutoRefresh();
+    this.startAutoRefresh();
+  }
+
+  private startAutoRefresh(): void {
+    this.stopAutoRefresh();
+    const intervalMs = this.refreshInterval() * 1000;
+    this.refreshTimer = setInterval(() => {
+      this.loadChartData();
+    }, intervalMs);
+  }
+
+  private stopAutoRefresh(): void {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
     }
   }
 
@@ -220,13 +502,12 @@ export class ViewerComponent implements OnInit {
     if (container) {
       container.scrollTo({
         left: index * container.clientWidth,
-        behavior: 'smooth'
+        behavior: 'smooth',
       });
     }
   }
 
   getLightBackground(color: string): string {
-    // Convertir el color a un fondo muy claro (95% de luminosidad)
     return `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`;
   }
 }
