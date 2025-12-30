@@ -1,7 +1,7 @@
 import { Controller, Get, Query, HttpException, HttpStatus } from '@nestjs/common';
 import { BingxService } from './bingx.service';
 
-@Controller('api/market')
+@Controller('market')
 export class MarketController {
   constructor(private readonly bingxService: BingxService) {}
 
