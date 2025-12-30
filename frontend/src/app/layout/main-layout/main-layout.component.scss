@@ -1,23 +1,23 @@
 .main-layout {
   display: grid;
-  grid-template-rows: 40px 1fr 40px;
+  grid-template-rows: 80px 1fr 80px;
   height: 100vh;
   background: #f8f9fa;
   overflow: hidden;
 }
 
-// Header (altura fija: 40px)
+// Header (altura fija: 80px)
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 20px;
+  padding: 16px 20px;
   background: #667eea;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 100;
   transition: background 0.3s ease;
   color: white;
-  height: 40px;
+  height: 80px;
 }
 
 .header-left {
@@ -27,7 +27,7 @@
 }
 
 .logo {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   margin: 0;
   color: white;
@@ -36,30 +36,30 @@
 .current-pair {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 8px;
+  padding: 6px 12px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  font-size: 12px;
+  border-radius: 20px;
+  font-size: 14px;
   font-weight: 600;
 
   .pair-icon {
-    font-size: 16px;
+    font-size: 20px;
     line-height: 1;
     font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
   }
 
   .pair-name {
-    font-size: 12px;
+    font-size: 14px;
   }
 }
 
 .settings-btn {
   background: none;
   border: none;
-  padding: 4px;
+  padding: 8px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: background 0.2s;
   color: white;
 
@@ -69,8 +69,8 @@
 
   svg {
     display: block;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 }
 
@@ -82,15 +82,15 @@
   min-height: 0;
 }
 
-// Bottom Navigation (altura fija: 40px)
+// Bottom Navigation (altura fija: 80px)
 .bottom-nav {
   background: #667eea;
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-around;
-  padding: 4px 0;
+  padding: 8px 0;
   transition: background 0.3s ease;
-  height: 40px;
+  height: 80px;
 }
 
 .nav-item {
@@ -98,8 +98,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 4px;
+  gap: 4px;
+  padding: 8px;
   background: none;
   border: none;
   cursor: pointer;
@@ -108,12 +108,12 @@
 
   svg {
     stroke: currentColor;
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
   }
 
   span {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 500;
   }
 
