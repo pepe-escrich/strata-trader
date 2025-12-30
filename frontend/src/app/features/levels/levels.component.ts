@@ -83,9 +83,10 @@ import { ActivePairService } from '../../shared/services/active-pair.service';
   `,
   styles: [`
     .levels-container {
-      height: 100%;
+      flex: 1;
       display: flex;
       flex-direction: column;
+      min-height: 0;
     }
 
     .cards-scroll {
