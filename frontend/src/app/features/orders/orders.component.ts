@@ -2,106 +2,101 @@ import { Component, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CryptoPairsService } from '../../shared/services/crypto-pairs.service';
 import { ActivePairService } from '../../shared/services/active-pair.service';
-import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-card.component';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, CryptoCardComponent],
+  imports: [CommonModule],
   template: `
     <div class="orders-container">
-      <div class="cards-wrapper">
-        <div class="cards-scroll" (scroll)="onScroll($event)">
-          @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
-            <div class="card-slide" [class.active]="currentIndex() === idx">
-              <app-crypto-card [pair]="pair">
-                <div class="card-details">
-                  <div class="section-header">
-                    <h3>Órdenes</h3>
-                    <button class="new-order-btn">+ Nueva</button>
+      <div class="cards-scroll" (scroll)="onScroll($event)">
+        @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
+          <div class="slide" [class.active]="currentIndex() === idx" [style.background]="getLightBackground(pair.color)">
+            <div class="slide-content">
+              <div class="section-header">
+                <h3>Órdenes</h3>
+                <button class="new-order-btn">+ Nueva</button>
+              </div>
+
+              <div class="orders-tabs">
+                <button
+                  class="tab-btn"
+                  [class.active]="activeTab() === 'active'"
+                  (click)="setActiveTab('active')">
+                  Activas
+                </button>
+                <button
+                  class="tab-btn"
+                  [class.active]="activeTab() === 'history'"
+                  (click)="setActiveTab('history')">
+                  Historial
+                </button>
+              </div>
+
+              @if (activeTab() === 'active') {
+                <div class="orders-list">
+                  <div class="empty-orders">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="9" y1="9" x2="15" y2="9"/>
+                      <line x1="9" y1="15" x2="15" y2="15"/>
+                    </svg>
+                    <p>No hay órdenes activas</p>
+                    <p class="hint">Crea una nueva orden para comenzar</p>
                   </div>
-
-                  <div class="orders-tabs">
-                    <button
-                      class="tab-btn"
-                      [class.active]="activeTab() === 'active'"
-                      (click)="setActiveTab('active')">
-                      Activas
-                    </button>
-                    <button
-                      class="tab-btn"
-                      [class.active]="activeTab() === 'history'"
-                      (click)="setActiveTab('history')">
-                      Historial
-                    </button>
-                  </div>
-
-                  @if (activeTab() === 'active') {
-                    <div class="orders-list">
-                      <div class="empty-orders">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                          <line x1="9" y1="9" x2="15" y2="9"/>
-                          <line x1="9" y1="15" x2="15" y2="15"/>
-                        </svg>
-                        <p>No hay órdenes activas</p>
-                        <p class="hint">Crea una nueva orden para comenzar</p>
-                      </div>
-                    </div>
-                  }
-
-                  @if (activeTab() === 'history') {
-                    <div class="orders-list">
-                      <div class="order-item completed">
-                        <div class="order-header">
-                          <span class="order-type buy">COMPRA</span>
-                          <span class="order-date">Hace 2h</span>
-                        </div>
-                        <div class="order-info">
-                          <div class="info-row">
-                            <span class="label">Precio</span>
-                            <span class="value">$--,---</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">Cantidad</span>
-                            <span class="value">0.--- {{ pair.symbol.replace('USDT', '') }}</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">Total</span>
-                            <span class="value">$---</span>
-                          </div>
-                        </div>
-                        <div class="order-status success">Completada</div>
-                      </div>
-
-                      <div class="order-item completed">
-                        <div class="order-header">
-                          <span class="order-type sell">VENTA</span>
-                          <span class="order-date">Hace 5h</span>
-                        </div>
-                        <div class="order-info">
-                          <div class="info-row">
-                            <span class="label">Precio</span>
-                            <span class="value">$--,---</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">Cantidad</span>
-                            <span class="value">0.--- {{ pair.symbol.replace('USDT', '') }}</span>
-                          </div>
-                          <div class="info-row">
-                            <span class="label">Total</span>
-                            <span class="value">$---</span>
-                          </div>
-                        </div>
-                        <div class="order-status success">Completada</div>
-                      </div>
-                    </div>
-                  }
                 </div>
-              </app-crypto-card>
+              }
+
+              @if (activeTab() === 'history') {
+                <div class="orders-list">
+                  <div class="order-item completed">
+                    <div class="order-header">
+                      <span class="order-type buy">COMPRA</span>
+                      <span class="order-date">Hace 2h</span>
+                    </div>
+                    <div class="order-info">
+                      <div class="info-row">
+                        <span class="label">Precio</span>
+                        <span class="value">$--,---</span>
+                      </div>
+                      <div class="info-row">
+                        <span class="label">Cantidad</span>
+                        <span class="value">0.--- {{ pair.symbol.replace('USDT', '') }}</span>
+                      </div>
+                      <div class="info-row">
+                        <span class="label">Total</span>
+                        <span class="value">$---</span>
+                      </div>
+                    </div>
+                    <div class="order-status success">Completada</div>
+                  </div>
+
+                  <div class="order-item completed">
+                    <div class="order-header">
+                      <span class="order-type sell">VENTA</span>
+                      <span class="order-date">Hace 5h</span>
+                    </div>
+                    <div class="order-info">
+                      <div class="info-row">
+                        <span class="label">Precio</span>
+                        <span class="value">$--,---</span>
+                      </div>
+                      <div class="info-row">
+                        <span class="label">Cantidad</span>
+                        <span class="value">0.--- {{ pair.symbol.replace('USDT', '') }}</span>
+                      </div>
+                      <div class="info-row">
+                        <span class="label">Total</span>
+                        <span class="value">$---</span>
+                      </div>
+                    </div>
+                    <div class="order-status success">Completada</div>
+                  </div>
+                </div>
+              }
             </div>
-          }
-        </div>
+          </div>
+        }
       </div>
 
       @if (pairsService.enabledPairs().length > 1) {
@@ -131,14 +126,8 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
       flex-direction: column;
     }
 
-    .cards-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: stretch;
-      overflow: hidden;
-    }
-
     .cards-scroll {
+      flex: 1;
       display: flex;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
@@ -146,25 +135,24 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       width: 100%;
-      height: 100%;
 
       &::-webkit-scrollbar {
         display: none;
       }
     }
 
-    .card-slide {
+    .slide {
       flex: 0 0 100%;
       scroll-snap-align: start;
       scroll-snap-stop: always;
       height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
+      padding: 40px 20px;
+      overflow-y: auto;
     }
 
-    .card-details {
-      margin-top: 24px;
+    .slide-content {
+      max-width: 600px;
+      margin: 0 auto;
     }
 
     .section-header {
@@ -431,5 +419,10 @@ export class OrdersComponent implements OnInit {
 
   setActiveTab(tab: 'active' | 'history'): void {
     this.activeTab.set(tab);
+  }
+
+  getLightBackground(color: string): string {
+    // Convertir el color a un fondo muy claro (95% de luminosidad)
+    return `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`;
   }
 }

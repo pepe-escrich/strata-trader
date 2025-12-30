@@ -2,39 +2,34 @@ import { Component, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CryptoPairsService } from '../../shared/services/crypto-pairs.service';
 import { ActivePairService } from '../../shared/services/active-pair.service';
-import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-card.component';
 
 @Component({
   selector: 'app-viewer',
   standalone: true,
-  imports: [CommonModule, CryptoCardComponent],
+  imports: [CommonModule],
   template: `
     <div class="viewer-container">
-      <div class="cards-wrapper">
-        <div class="cards-scroll" (scroll)="onScroll($event)">
-          @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
-            <div class="card-slide" [class.active]="currentIndex() === idx">
-              <app-crypto-card [pair]="pair">
-                <div class="card-details">
-                  <div class="price">
-                    <span class="label">Precio Actual</span>
-                    <span class="value">$--,---</span>
-                  </div>
-                  <div class="stats">
-                    <div class="stat">
-                      <span class="label">24h</span>
-                      <span class="value positive">+0.00%</span>
-                    </div>
-                    <div class="stat">
-                      <span class="label">Vol</span>
-                      <span class="value">$--M</span>
-                    </div>
-                  </div>
+      <div class="cards-scroll" (scroll)="onScroll($event)">
+        @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
+          <div class="slide" [class.active]="currentIndex() === idx" [style.background]="getLightBackground(pair.color)">
+            <div class="slide-content">
+              <div class="price">
+                <span class="label">Precio Actual</span>
+                <span class="value">$--,---</span>
+              </div>
+              <div class="stats">
+                <div class="stat">
+                  <span class="label">24h</span>
+                  <span class="value positive">+0.00%</span>
                 </div>
-              </app-crypto-card>
+                <div class="stat">
+                  <span class="label">Vol</span>
+                  <span class="value">$--M</span>
+                </div>
+              </div>
             </div>
-          }
-        </div>
+          </div>
+        }
       </div>
 
       @if (pairsService.enabledPairs().length > 1) {
@@ -64,14 +59,8 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
       flex-direction: column;
     }
 
-    .cards-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: stretch;
-      overflow: hidden;
-    }
-
     .cards-scroll {
+      flex: 1;
       display: flex;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
@@ -79,25 +68,24 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       width: 100%;
-      height: 100%;
 
       &::-webkit-scrollbar {
         display: none;
       }
     }
 
-    .card-slide {
+    .slide {
       flex: 0 0 100%;
       scroll-snap-align: start;
       scroll-snap-stop: always;
       height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
+      padding: 40px 20px;
+      overflow-y: auto;
     }
 
-    .card-details {
-      margin-top: 24px;
+    .slide-content {
+      max-width: 600px;
+      margin: 0 auto;
     }
 
     .price {
@@ -234,5 +222,10 @@ export class ViewerComponent implements OnInit {
         behavior: 'smooth'
       });
     }
+  }
+
+  getLightBackground(color: string): string {
+    // Convertir el color a un fondo muy claro (95% de luminosidad)
+    return `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`;
   }
 }
