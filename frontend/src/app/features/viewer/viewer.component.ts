@@ -78,6 +78,19 @@ import {
                     <button class="retry-btn" (click)="loadChartData()">Reintentar</button>
                   </div>
                 }
+
+                <!-- Panel de Debug -->
+                @if (debugInfo()) {
+                  <div class="debug-panel">
+                    <button class="debug-toggle" (click)="toggleDebug()">
+                      {{ showDebug() ? '🔽' : '▶️' }} Debug
+                    </button>
+                    @if (showDebug()) {
+                      <pre class="debug-content">{{ debugInfo() }}</pre>
+                    }
+                  </div>
+                }
+
                 <div #chartContainer class="chart-container"></div>
               </div>
             </div>
@@ -342,6 +355,53 @@ import {
         font-size: 14px;
       }
     }
+
+    .debug-panel {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #333;
+      border-radius: 8px;
+      z-index: 1000;
+      max-height: 300px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .debug-toggle {
+      width: 100%;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .debug-toggle:active {
+      background: #2a2a2a;
+    }
+
+    .debug-content {
+      margin: 0;
+      padding: 12px;
+      background: #0a0a0a;
+      color: #0f0;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      overflow-y: auto;
+      max-height: 250px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
   `],
 })
 export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -352,6 +412,8 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   refreshInterval = signal<RefreshInterval>(30);
   loading = signal(false);
   error = signal<string | null>(null);
+  debugInfo = signal<string>('');
+  showDebug = signal<boolean>(true);
 
   timeframeOptions = TIMEFRAME_OPTIONS;
   refreshOptions = REFRESH_INTERVAL_OPTIONS;
@@ -443,8 +505,18 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   loadChartData(): void {
     const currentPair = this.activePairService.currentPair();
-    if (!currentPair) return;
+    if (!currentPair) {
+      this.debugInfo.set('⚠️ No hay par activo');
+      return;
+    }
 
+    const timestamp = new Date().toLocaleTimeString();
+    let debugLog = `[${timestamp}] Cargando datos...\n`;
+    debugLog += `Par: ${currentPair.symbol}\n`;
+    debugLog += `Timeframe: ${this.selectedTimeframe()}\n`;
+    debugLog += `URL API: ${this.marketService['apiUrl']}\n\n`;
+
+    this.debugInfo.set(debugLog);
     this.loading.set(true);
     this.error.set(null);
 
@@ -452,28 +524,68 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       .getKlines(currentPair.symbol, this.selectedTimeframe(), 500)
       .subscribe({
         next: (candles) => {
-          if (this.candleSeries && candles.length > 0) {
-            const data: CandlestickData[] = candles.map(c => ({
-              time: c.time as any,
-              open: c.open,
-              high: c.high,
-              low: c.low,
-              close: c.close,
-            }));
-            this.candleSeries.setData(data);
-            this.chart?.timeScale().fitContent();
+          debugLog += `✅ Respuesta recibida\n`;
+          debugLog += `Velas recibidas: ${candles.length}\n`;
+
+          if (candles.length > 0) {
+            debugLog += `Primera vela: ${JSON.stringify(candles[0], null, 2)}\n`;
+            debugLog += `Última vela: ${JSON.stringify(candles[candles.length - 1], null, 2)}\n`;
+
+            if (this.candleSeries) {
+              const data: CandlestickData[] = candles.map(c => ({
+                time: c.time as any,
+                open: c.open,
+                high: c.high,
+                low: c.low,
+                close: c.close,
+              }));
+
+              debugLog += `\nDatos transformados: ${data.length} velas\n`;
+              debugLog += `Chart existe: ${!!this.chart}\n`;
+              debugLog += `CandleSeries existe: ${!!this.candleSeries}\n`;
+
+              try {
+                this.candleSeries.setData(data);
+                this.chart?.timeScale().fitContent();
+                debugLog += `✅ Datos cargados en el gráfico\n`;
+              } catch (e: any) {
+                debugLog += `❌ Error al cargar en gráfico: ${e.message}\n`;
+              }
+            } else {
+              debugLog += `❌ CandleSeries no inicializado\n`;
+            }
+          } else {
+            debugLog += `⚠️ No se recibieron velas\n`;
           }
+
+          this.debugInfo.set(debugLog);
           this.loading.set(false);
         },
         error: (err) => {
           console.error('Error loading chart data:', err);
-          let errorMessage = 'Error al cargar los datos del gráfico\n\n';
 
-          // Información del error
+          debugLog += `\n❌ ERROR\n`;
+          debugLog += `Status: ${err.status || 'unknown'}\n`;
+          debugLog += `URL: ${err.url || 'N/A'}\n`;
+
+          if (err.error) {
+            if (typeof err.error === 'string') {
+              debugLog += `Backend: ${err.error}\n`;
+            } else {
+              debugLog += `Backend: ${JSON.stringify(err.error, null, 2)}\n`;
+            }
+          }
+
+          if (err.message) {
+            debugLog += `Client: ${err.message}\n`;
+          }
+
+          this.debugInfo.set(debugLog);
+
+          let errorMessage = 'Error al cargar los datos del gráfico\n\n';
           errorMessage += `Status: ${err.status || 'unknown'}\n`;
           errorMessage += `URL: ${err.url || 'N/A'}\n\n`;
 
-          // Mensaje del backend
           if (err.error) {
             if (typeof err.error === 'string') {
               errorMessage += `Backend: ${err.error}\n`;
@@ -484,12 +596,10 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
             }
           }
 
-          // Mensaje del cliente
           if (err.message) {
             errorMessage += `Client: ${err.message}\n`;
           }
 
-          // StatusText
           if (err.statusText && err.statusText !== 'Unknown Error') {
             errorMessage += `StatusText: ${err.statusText}\n`;
           }
@@ -498,6 +608,10 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
           this.loading.set(false);
         },
       });
+  }
+
+  toggleDebug(): void {
+    this.showDebug.set(!this.showDebug());
   }
 
   setTimeframe(timeframe: Timeframe): void {
