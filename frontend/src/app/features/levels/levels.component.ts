@@ -10,7 +10,7 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
   template: `
     <div class="levels-container">
       <div class="cards-wrapper">
-        <div class="cards-scroll">
+        <div class="cards-scroll" (scroll)="onScroll($event)">
           @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
             <div class="card-slide" [class.active]="currentIndex() === idx">
               <app-crypto-card [pair]="pair">
@@ -102,14 +102,12 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
 
     .cards-scroll {
       display: flex;
-      gap: 16px;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       scroll-behavior: smooth;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       width: 100%;
-      padding: 8px 0;
 
       &::-webkit-scrollbar {
         display: none;
@@ -117,14 +115,9 @@ import { CryptoCardComponent } from '../../shared/components/crypto-card/crypto-
     }
 
     .card-slide {
-      flex: 0 0 90%;
-      scroll-snap-align: center;
-      transition: transform 0.3s, opacity 0.3s;
-
-      &:not(.active) {
-        opacity: 0.6;
-        transform: scale(0.95);
-      }
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
     }
 
     .card-details {
@@ -278,12 +271,25 @@ export class LevelsComponent {
 
   constructor(public pairsService: CryptoPairsService) {}
 
+  onScroll(event: Event): void {
+    const container = event.target as HTMLElement;
+    const scrollLeft = container.scrollLeft;
+    const itemWidth = container.clientWidth;
+    const newIndex = Math.round(scrollLeft / itemWidth);
+
+    if (newIndex !== this.currentIndex()) {
+      this.currentIndex.set(newIndex);
+    }
+  }
+
   goToSlide(index: number): void {
     this.currentIndex.set(index);
     const container = document.querySelector('.cards-scroll');
-    const slide = document.querySelectorAll('.card-slide')[index];
-    if (container && slide) {
-      slide.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    if (container) {
+      container.scrollTo({
+        left: index * container.clientWidth,
+        behavior: 'smooth'
+      });
     }
   }
 }
