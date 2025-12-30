@@ -120,6 +120,7 @@ import {
       min-height: 0;
       padding: 20px;
       gap: 16px;
+      height: 100%; /* Asegurar que tome toda la altura disponible */
     }
 
     .controls {
@@ -186,12 +187,15 @@ import {
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       overflow: hidden;
-      min-height: 400px;
+      min-height: 400px; /* Altura mínima garantizada */
+      display: flex;
+      flex-direction: column;
     }
 
     .chart-container {
+      flex: 1;
+      min-height: 400px; /* Altura mínima garantizada */
       width: 100%;
-      height: 100%;
     }
 
     .loading {
