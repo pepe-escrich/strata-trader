@@ -259,10 +259,21 @@ import {
       gap: 12px;
       background: rgba(255, 255, 255, 0.95);
       z-index: 10;
+      padding: 20px;
+      overflow-y: auto;
 
       span {
-        font-size: 14px;
+        font-size: 13px;
         color: #ef4444;
+        text-align: center;
+        max-width: 100%;
+        word-wrap: break-word;
+        font-family: monospace;
+        background: #fee;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #fcc;
+        line-height: 1.5;
       }
 
       .retry-btn {
@@ -453,7 +464,20 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error loading chart data:', err);
-          this.error.set('Error al cargar los datos del gráfico');
+          let errorMessage = 'Error al cargar los datos del gráfico';
+
+          if (err.error?.message) {
+            errorMessage += `: ${err.error.message}`;
+          } else if (err.message) {
+            errorMessage += `: ${err.message}`;
+          } else if (err.statusText) {
+            errorMessage += `: ${err.statusText}`;
+          }
+
+          errorMessage += ` (Status: ${err.status || 'unknown'})`;
+          errorMessage += ` URL: ${err.url || 'N/A'}`;
+
+          this.error.set(errorMessage);
           this.loading.set(false);
         },
       });
