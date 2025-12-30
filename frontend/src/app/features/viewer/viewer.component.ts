@@ -28,83 +28,67 @@ import {
   providers: [BingxMarketService],
   template: `
     <div class="viewer-container">
-      <div class="cards-scroll" (scroll)="onScroll($event)">
-        @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
-          <div class="slide" [class.active]="currentIndex() === idx" [style.background]="getLightBackground(pair.color)">
-            <div class="slide-content">
-              <!-- Controles -->
-              <div class="controls">
-                <div class="control-group">
-                  <label>Temporalidad:</label>
-                  <div class="button-group">
-                    @for (option of timeframeOptions; track option.value) {
-                      <button
-                        class="control-btn"
-                        [class.active]="selectedTimeframe() === option.value"
-                        (click)="setTimeframe(option.value)"
-                        [disabled]="loading()">
-                        {{ option.label }}
-                      </button>
-                    }
-                  </div>
-                </div>
-
-                <div class="control-group">
-                  <label>Actualización:</label>
-                  <div class="button-group">
-                    @for (option of refreshOptions; track option.value) {
-                      <button
-                        class="control-btn"
-                        [class.active]="refreshInterval() === option.value"
-                        (click)="setRefreshInterval(option.value)">
-                        {{ option.label }}
-                      </button>
-                    }
-                  </div>
-                </div>
-              </div>
-
-              <!-- Gráfico -->
-              <div class="chart-wrapper">
-                @if (loading()) {
-                  <div class="loading">
-                    <div class="spinner"></div>
-                    <span>Cargando datos...</span>
-                  </div>
-                }
-                @if (error()) {
-                  <div class="error">
-                    <span>❌ {{ error() }}</span>
-                    <button class="retry-btn" (click)="loadChartData()">Reintentar</button>
-                  </div>
-                }
-
-                <!-- Panel de Debug -->
-                @if (debugInfo()) {
-                  <div class="debug-panel">
-                    <button class="debug-toggle" (click)="toggleDebug()">
-                      {{ showDebug() ? '🔽' : '▶️' }} Debug
-                    </button>
-                    @if (showDebug()) {
-                      <pre class="debug-content">{{ debugInfo() }}</pre>
-                    }
-                  </div>
-                }
-
-                <div #chartContainer class="chart-container"></div>
-              </div>
-            </div>
+      <!-- Controles -->
+      <div class="controls">
+        <div class="control-group">
+          <label>Temporalidad:</label>
+          <div class="button-group">
+            @for (option of timeframeOptions; track option.value) {
+              <button
+                class="control-btn"
+                [class.active]="selectedTimeframe() === option.value"
+                (click)="setTimeframe(option.value)"
+                [disabled]="loading()">
+                {{ option.label }}
+              </button>
+            }
           </div>
-        }
+        </div>
+
+        <div class="control-group">
+          <label>Actualización:</label>
+          <div class="button-group">
+            @for (option of refreshOptions; track option.value) {
+              <button
+                class="control-btn"
+                [class.active]="refreshInterval() === option.value"
+                (click)="setRefreshInterval(option.value)">
+                {{ option.label }}
+              </button>
+            }
+          </div>
+        </div>
       </div>
 
+      <!-- Gráfico -->
+      <div class="chart-wrapper">
+        @if (loading()) {
+          <div class="loading">
+            <div class="spinner"></div>
+            <span>Cargando datos...</span>
+          </div>
+        }
+        @if (error()) {
+          <div class="error">
+            <span>❌ {{ error() }}</span>
+            <button class="retry-btn" (click)="loadChartData()">Reintentar</button>
+          </div>
+        }
+
+        <div #chartContainer class="chart-container"></div>
+      </div>
+
+      <!-- Selector de pares -->
       @if (pairsService.enabledPairs().length > 1) {
-        <div class="pagination-dots">
+        <div class="pair-selector">
           @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
             <button
-              class="dot"
+              class="pair-btn"
               [class.active]="currentIndex() === idx"
+              [style.borderColor]="pair.color"
               (click)="goToSlide(idx)">
+              <span class="pair-icon">{{ pair.icon }}</span>
+              <span class="pair-name">{{ pair.name }}</span>
             </button>
           }
         </div>
@@ -116,6 +100,18 @@ import {
           <p class="hint">Usa el menú superior para añadir pares</p>
         </div>
       }
+
+      <!-- Panel de Debug -->
+      @if (debugInfo()) {
+        <div class="debug-panel">
+          <button class="debug-toggle" (click)="toggleDebug()">
+            {{ showDebug() ? '🔽' : '▶️' }} Debug
+          </button>
+          @if (showDebug()) {
+            <pre class="debug-content">{{ debugInfo() }}</pre>
+          }
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -124,37 +120,7 @@ import {
       display: flex;
       flex-direction: column;
       min-height: 0;
-    }
-
-    .cards-scroll {
-      flex: 1;
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      width: 100%;
-
-      &::-webkit-scrollbar {
-        display: none;
-      }
-    }
-
-    .slide {
-      flex: 0 0 100%;
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
-      height: 100%;
       padding: 20px;
-      overflow-y: auto;
-    }
-
-    .slide-content {
-      max-width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
       gap: 16px;
     }
 
@@ -314,27 +280,52 @@ import {
       }
     }
 
-    .pagination-dots {
+    .pair-selector {
       display: flex;
-      justify-content: center;
       gap: 8px;
-      padding: 16px 0;
+      padding: 0;
+      overflow-x: auto;
+      scrollbar-width: thin;
+
+      &::-webkit-scrollbar {
+        height: 4px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 2px;
+      }
     }
 
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #d1d5db;
-      border: none;
-      padding: 0;
+    .pair-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: white;
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.2s;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 500;
+
+      &:hover {
+        background: #f3f4f6;
+      }
 
       &.active {
-        background: #667eea;
-        width: 24px;
-        border-radius: 4px;
+        background: rgba(102, 126, 234, 0.1);
+        border-width: 2px;
+      }
+
+      .pair-icon {
+        font-size: 18px;
+      }
+
+      .pair-name {
+        color: #374151;
       }
     }
 
@@ -448,9 +439,12 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.initChart();
-    this.loadChartData();
-    this.startAutoRefresh();
+    // Usar setTimeout para asegurar que el DOM esté completamente renderizado
+    setTimeout(() => {
+      this.initChart();
+      this.loadChartData();
+      this.startAutoRefresh();
+    }, 100);
   }
 
   ngOnDestroy(): void {
@@ -464,43 +458,79 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initChart(): void {
-    if (!this.chartContainer) return;
+    let debugLog = `[INIT CHART] Iniciando...\n`;
+
+    if (!this.chartContainer) {
+      debugLog += `❌ chartContainer no disponible\n`;
+      this.debugInfo.set(debugLog);
+      console.error('chartContainer is not available');
+      return;
+    }
+
+    debugLog += `✅ chartContainer disponible\n`;
 
     const container = this.chartContainer.nativeElement;
+    debugLog += `Container dimensions: ${container.clientWidth}x${container.clientHeight}\n`;
 
-    this.chart = createChart(container, {
-      width: container.clientWidth,
-      height: container.clientHeight,
-      layout: {
-        background: { color: '#ffffff' },
-        textColor: '#333',
-      },
-      grid: {
-        vertLines: { color: '#f0f0f0' },
-        horzLines: { color: '#f0f0f0' },
-      },
-      timeScale: {
-        timeVisible: true,
-        secondsVisible: false,
-      },
-    });
+    if (container.clientWidth === 0 || container.clientHeight === 0) {
+      debugLog += `❌ Container sin dimensiones\n`;
+      this.debugInfo.set(debugLog);
+      console.error('Container has no dimensions');
+      return;
+    }
 
-    this.candleSeries = this.chart.addCandlestickSeries({
-      upColor: '#10b981',
-      downColor: '#ef4444',
-      borderVisible: false,
-      wickUpColor: '#10b981',
-      wickDownColor: '#ef4444',
-    });
+    try {
+      this.chart = createChart(container, {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        layout: {
+          background: { color: '#ffffff' },
+          textColor: '#333',
+        },
+        grid: {
+          vertLines: { color: '#f0f0f0' },
+          horzLines: { color: '#f0f0f0' },
+        },
+        timeScale: {
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
 
-    // Responsive resize
-    this.resizeObserver = new ResizeObserver(entries => {
-      if (this.chart && entries.length > 0) {
-        const { width, height } = entries[0].contentRect;
-        this.chart.resize(width, height);
-      }
-    });
-    this.resizeObserver.observe(container);
+      debugLog += `✅ Chart creado\n`;
+
+      this.candleSeries = this.chart.addCandlestickSeries({
+        upColor: '#10b981',
+        downColor: '#ef4444',
+        borderVisible: false,
+        wickUpColor: '#10b981',
+        wickDownColor: '#ef4444',
+      });
+
+      debugLog += `✅ CandleSeries creado\n`;
+
+      // Responsive resize
+      this.resizeObserver = new ResizeObserver(entries => {
+        if (this.chart && entries.length > 0) {
+          const { width, height } = entries[0].contentRect;
+          this.chart.resize(width, height);
+        }
+      });
+      this.resizeObserver.observe(container);
+
+      debugLog += `✅ ResizeObserver configurado\n`;
+      this.debugInfo.set(debugLog);
+
+      console.log('Chart initialized successfully', {
+        chart: this.chart,
+        candleSeries: this.candleSeries,
+        dimensions: `${container.clientWidth}x${container.clientHeight}`
+      });
+    } catch (error: any) {
+      debugLog += `❌ Error al crear chart: ${error.message}\n`;
+      this.debugInfo.set(debugLog);
+      console.error('Error initializing chart:', error);
+    }
   }
 
   loadChartData(): void {
@@ -640,29 +670,12 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  onScroll(event: Event): void {
-    const container = event.target as HTMLElement;
-    const scrollLeft = container.scrollLeft;
-    const itemWidth = container.clientWidth;
-    const newIndex = Math.round(scrollLeft / itemWidth);
-
-    if (newIndex !== this.currentIndex()) {
-      this.currentIndex.set(newIndex);
-    }
-  }
-
   goToSlide(index: number): void {
-    this.currentIndex.set(index);
-    const container = document.querySelector('.cards-scroll');
-    if (container) {
-      container.scrollTo({
-        left: index * container.clientWidth,
-        behavior: 'smooth',
-      });
+    const pairs = this.pairsService.enabledPairs();
+    if (index >= 0 && index < pairs.length) {
+      this.currentIndex.set(index);
+      this.activePairService.setActivePair(pairs[index]);
+      this.loadChartData();
     }
-  }
-
-  getLightBackground(color: string): string {
-    return `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`;
   }
 }
