@@ -44,9 +44,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: black;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   flex-shrink: 0;
+  color: white;
+  font-weight: bold;
 }
 
 .logo {
