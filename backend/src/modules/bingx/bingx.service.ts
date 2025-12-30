@@ -129,7 +129,8 @@ export class BingxService {
       : {};
 
     try {
-      this.logger.debug(`GET ${url} - Params: ${JSON.stringify(queryParams)}`);
+      this.logger.log(`[BingX GET] URL: ${url}`);
+      this.logger.log(`[BingX GET] Params: ${JSON.stringify(queryParams)}`);
 
       const response = await firstValueFrom(
         this.httpService.get<BingXResponse<T>>(url, {
@@ -139,7 +140,10 @@ export class BingxService {
         }),
       );
 
+      this.logger.log(`[BingX GET] Response code: ${response.data.code}, msg: ${response.data.msg}`);
+
       if (response.data.code !== 0) {
+        this.logger.error(`[BingX GET] Error response: ${JSON.stringify(response.data)}`);
         throw new HttpException(
           response.data.msg || 'BingX API error',
           HttpStatus.BAD_REQUEST,
@@ -148,7 +152,10 @@ export class BingxService {
 
       return response.data.data;
     } catch (error) {
-      this.logger.error(`BingX API Error: ${error.message}`, error.stack);
+      this.logger.error(`[BingX GET] Error: ${error.message}`);
+      if (error.response?.data) {
+        this.logger.error(`[BingX GET] Error response data: ${JSON.stringify(error.response.data)}`);
+      }
       throw new HttpException(
         error.response?.data?.msg || error.message || 'BingX API request failed',
         error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
@@ -178,8 +185,11 @@ export class BingxService {
     endTime?: number,
   ): Promise<Candle[]> {
     const formattedSymbol = this.formatSymbol(symbol);
-    this.logger.debug(
-      `Fetching candles for ${formattedSymbol} - Interval: ${interval}, Limit: ${limit}`,
+    this.logger.log(
+      `[getCandles] Input - symbol: ${symbol}, interval: ${interval}, limit: ${limit}`,
+    );
+    this.logger.log(
+      `[getCandles] Formatted symbol: ${formattedSymbol}`,
     );
 
     const params: Record<string, any> = {
@@ -190,6 +200,8 @@ export class BingxService {
 
     if (startTime) params.startTime = startTime;
     if (endTime) params.endTime = endTime;
+
+    this.logger.log(`[getCandles] Params to BingX: ${JSON.stringify(params)}`);
 
     const rawCandles = await this.get<any[]>(
       '/openApi/swap/v3/quote/klines',
