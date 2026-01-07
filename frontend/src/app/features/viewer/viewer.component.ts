@@ -10,7 +10,10 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { createChart, CandlestickData, CandlestickSeriesOptions } from 'lightweight-charts';
+import * as echarts from 'echarts/core';
+import { CandlestickChart } from 'echarts/charts';
+import { GridComponent, TooltipComponent } from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
 import { CryptoPairsService } from '../../shared/services/crypto-pairs.service';
 import { ActivePairService } from '../../shared/services/active-pair.service';
 import { BingxMarketService } from '../../shared/services/bingx-market.service';
@@ -20,6 +23,8 @@ import {
   TIMEFRAME_OPTIONS,
   REFRESH_INTERVAL_OPTIONS,
 } from '../../shared/models/candlestick.model';
+
+echarts.use([CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer]);
 
 @Component({
   selector: 'app-viewer',
@@ -381,8 +386,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   timeframeOptions = TIMEFRAME_OPTIONS;
   refreshOptions = REFRESH_INTERVAL_OPTIONS;
 
-  private chart: any = null;
-  private candleSeries: any = null;
+  private chart: echarts.ECharts | null = null;
   private refreshTimer: any = null;
   private resizeObserver: ResizeObserver | null = null;
   private chartInitialized = false;
@@ -429,7 +433,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       this.resizeObserver.disconnect();
     }
     if (this.chart) {
-      this.chart.remove();
+      this.chart.dispose();
     }
   }
 
@@ -447,59 +451,68 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     try {
-      this.chart = createChart(container, {
-        width: container.clientWidth,
-        height: container.clientHeight,
-        layout: {
-          background: { color: '#ffffff' },
-          textColor: '#333',
-        },
-        grid: {
-          vertLines: { color: '#f0f0f0' },
-          horzLines: { color: '#f0f0f0' },
-        },
-        timeScale: {
-          timeVisible: true,
-          secondsVisible: false,
-        },
-      });
+      // Crear instancia de ECharts
+      this.chart = echarts.init(container);
 
-      // Probar cada método hasta encontrar el que crea la serie
-      let seriesCreated = false;
-      const options = {
-        upColor: '#10b981',
-        downColor: '#ef4444',
-        borderVisible: false,
-        wickUpColor: '#10b981',
-        wickDownColor: '#ef4444',
+      // Configuración inicial del gráfico
+      const option: echarts.EChartsCoreOption = {
+        grid: {
+          left: '50',
+          right: '50',
+          top: '40',
+          bottom: '40',
+        },
+        xAxis: {
+          type: 'category',
+          data: [],
+          boundaryGap: true,
+          axisLine: { lineStyle: { color: '#8392A5' } },
+        },
+        yAxis: {
+          type: 'value',
+          scale: true,
+          splitLine: { show: true, lineStyle: { color: '#f0f0f0' } },
+          axisLine: { lineStyle: { color: '#8392A5' } },
+        },
+        series: [
+          {
+            type: 'candlestick',
+            data: [],
+            itemStyle: {
+              color: '#10b981',
+              color0: '#ef4444',
+              borderColor: '#10b981',
+              borderColor0: '#ef4444',
+            },
+          },
+        ],
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+          },
+          formatter: function (params: any) {
+            const data = params[0];
+            if (data && data.data) {
+              return `
+                Fecha: ${data.name}<br/>
+                Apertura: ${data.data[1]}<br/>
+                Cierre: ${data.data[2]}<br/>
+                Mínimo: ${data.data[3]}<br/>
+                Máximo: ${data.data[4]}
+              `;
+            }
+            return '';
+          },
+        },
       };
 
-      const allKeys = Object.keys(this.chart);
-      for (const key of allKeys) {
-        if (typeof (this.chart as any)[key] !== 'function') continue;
-
-        try {
-          const result = (this.chart as any)[key](options);
-          // Verificar si el resultado parece una serie
-          if (result && typeof result === 'object' && result.setData) {
-            this.candleSeries = result;
-            seriesCreated = true;
-            break;
-          }
-        } catch (e: any) {
-          // Continuar probando otros métodos
-        }
-      }
-
-      if (!seriesCreated) {
-        throw new Error('No se pudo crear la serie de velas');
-      }
+      this.chart.setOption(option);
 
       // Responsive resize
-      this.resizeObserver = new ResizeObserver(entries => {
-        if (this.chart && entries.length > 0) {
-          const { width, height } = entries[0].contentRect;
-          this.chart.resize(width, height);
+      this.resizeObserver = new ResizeObserver(() => {
+        if (this.chart) {
+          this.chart.resize();
         }
       });
       this.resizeObserver.observe(container);
@@ -507,11 +520,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       // Marcar el chart como inicializado
       this.chartInitialized = true;
 
-      console.log('Chart initialized successfully', {
-        chart: this.chart,
-        candleSeries: this.candleSeries,
-        dimensions: `${container.clientWidth}x${container.clientHeight}`
-      });
+      console.log('ECharts initialized successfully');
     } catch (error: any) {
       console.error('Error initializing chart:', error);
     }
@@ -523,7 +532,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    if (!this.chartInitialized) {
+    if (!this.chartInitialized || !this.chart) {
       return;
     }
 
@@ -534,18 +543,33 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       .getKlines(currentPair.symbol, this.selectedTimeframe(), 500)
       .subscribe({
         next: (candles) => {
-          if (candles.length > 0 && this.candleSeries) {
-            const data: CandlestickData[] = candles.map(c => ({
-              time: c.time as any,
-              open: c.open,
-              high: c.high,
-              low: c.low,
-              close: c.close,
-            }));
+          if (candles.length > 0 && this.chart) {
+            // Convertir datos al formato de ECharts: [open, close, low, high]
+            const data = candles.map(c => [c.open, c.close, c.low, c.high]);
+
+            // Convertir timestamps a fechas legibles
+            const dates = candles.map(c => {
+              const date = new Date(c.time * 1000);
+              return date.toLocaleString('es-ES', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+            });
 
             try {
-              this.candleSeries.setData(data);
-              this.chart?.timeScale().fitContent();
+              // Actualizar datos del gráfico
+              this.chart.setOption({
+                xAxis: {
+                  data: dates,
+                },
+                series: [
+                  {
+                    data: data,
+                  },
+                ],
+              });
             } catch (e: any) {
               console.error('Error loading data into chart:', e);
             }

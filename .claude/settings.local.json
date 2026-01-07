@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm run build:dev:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }
