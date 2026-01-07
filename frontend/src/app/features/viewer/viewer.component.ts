@@ -12,14 +12,14 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { init, dispose, CandleType } from 'klinecharts';
 import type { Chart } from 'klinecharts';
+import { Subscription } from 'rxjs';
 import { CryptoPairsService } from '../../shared/services/crypto-pairs.service';
 import { ActivePairService } from '../../shared/services/active-pair.service';
 import { BingxMarketService } from '../../shared/services/bingx-market.service';
+import { WebSocketMarketService } from '../../shared/services/websocket-market.service';
 import {
   Timeframe,
-  RefreshInterval,
   TIMEFRAME_OPTIONS,
-  REFRESH_INTERVAL_OPTIONS,
 } from '../../shared/models/candlestick.model';
 
 @Component({
@@ -46,20 +46,6 @@ import {
                         [class.active]="selectedTimeframe() === option.value"
                         (click)="setTimeframe(option.value)"
                         [disabled]="loading()">
-                        {{ option.label }}
-                      </button>
-                    }
-                  </div>
-                </div>
-
-                <div class="control-group">
-                  <label>Actualización:</label>
-                  <div class="button-group">
-                    @for (option of refreshOptions; track option.value) {
-                      <button
-                        class="control-btn"
-                        [class.active]="refreshInterval() === option.value"
-                        (click)="setRefreshInterval(option.value)">
                         {{ option.label }}
                       </button>
                     }
@@ -403,29 +389,35 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   currentIndex = signal(0);
   selectedTimeframe = signal<Timeframe>('15m');
-  refreshInterval = signal<RefreshInterval>(30);
   loading = signal(false);
   error = signal<string | null>(null);
 
   timeframeOptions = TIMEFRAME_OPTIONS;
-  refreshOptions = REFRESH_INTERVAL_OPTIONS;
 
   private chart: Chart | null = null;
-  private refreshTimer: any = null;
   private resizeObserver: ResizeObserver | null = null;
   private chartInitialized = false;
+  private wsSubscription: Subscription | null = null;
 
   constructor(
     public pairsService: CryptoPairsService,
     private activePairService: ActivePairService,
-    private marketService: BingxMarketService
+    private marketService: BingxMarketService,
+    private wsMarketService: WebSocketMarketService
   ) {
     // Actualizar par activo cuando cambie el índice
     effect(() => {
       const index = this.currentIndex();
       const pairs = this.pairsService.enabledPairs();
       if (pairs.length > 0 && index < pairs.length) {
+        const previousPair = this.activePairService.currentPair();
         this.activePairService.setActivePair(pairs[index]);
+
+        // Desuscribirse del par anterior
+        if (previousPair) {
+          this.wsMarketService.unsubscribeFromKline(previousPair.symbol, this.selectedTimeframe());
+        }
+
         // Reinicializar el gráfico para el nuevo slide
         setTimeout(() => {
           if (this.chart && this.chartContainer) {
@@ -440,6 +432,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
           this.initChart();
           if (this.chartInitialized) {
             this.loadChartData();
+            this.subscribeToWebSocket();
           }
         }, 50);
       }
@@ -459,12 +452,21 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.initChart();
       this.loadChartData();
-      this.startAutoRefresh();
+      this.subscribeToWebSocket();
     }, 100);
   }
 
   ngOnDestroy(): void {
-    this.stopAutoRefresh();
+    // Unsubscribe from WebSocket
+    const currentPair = this.activePairService.currentPair();
+    if (currentPair) {
+      this.wsMarketService.unsubscribeFromKline(currentPair.symbol, this.selectedTimeframe());
+    }
+
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe();
+    }
+
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }
@@ -615,28 +617,70 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   setTimeframe(timeframe: Timeframe): void {
+    const currentPair = this.activePairService.currentPair();
+    if (!currentPair) return;
+
+    // Unsubscribe from old timeframe
+    this.wsMarketService.unsubscribeFromKline(currentPair.symbol, this.selectedTimeframe());
+
+    // Update timeframe
     this.selectedTimeframe.set(timeframe);
+
+    // Load new data and subscribe to new timeframe
     this.loadChartData();
+    this.subscribeToWebSocket();
   }
 
-  setRefreshInterval(interval: RefreshInterval): void {
-    this.refreshInterval.set(interval);
-    this.stopAutoRefresh();
-    this.startAutoRefresh();
+  private subscribeToWebSocket(): void {
+    const currentPair = this.activePairService.currentPair();
+    if (!currentPair) return;
+
+    // Unsubscribe from previous subscription if exists
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe();
+    }
+
+    // Subscribe to kline updates
+    this.wsMarketService.subscribeToKline(currentPair.symbol, this.selectedTimeframe());
+
+    // Listen for updates
+    this.wsSubscription = this.wsMarketService.getKlineUpdates().subscribe({
+      next: (update) => {
+        // Only process updates for current pair and timeframe
+        if (
+          update.symbol === currentPair.symbol &&
+          update.interval === this.selectedTimeframe()
+        ) {
+          this.handleKlineUpdate(update);
+        }
+      },
+      error: (err) => {
+        console.error('WebSocket error:', err);
+      },
+    });
   }
 
-  private startAutoRefresh(): void {
-    this.stopAutoRefresh();
-    const intervalMs = this.refreshInterval() * 1000;
-    this.refreshTimer = setInterval(() => {
-      this.loadChartData();
-    }, intervalMs);
-  }
+  private handleKlineUpdate(update: any): void {
+    if (!this.chart) return;
 
-  private stopAutoRefresh(): void {
-    if (this.refreshTimer) {
-      clearInterval(this.refreshTimer);
-      this.refreshTimer = null;
+    const candleData = {
+      timestamp: update.timestamp,
+      open: update.open,
+      high: update.high,
+      low: update.low,
+      close: update.close,
+      volume: update.volume,
+    };
+
+    try {
+      // Update the last candle or add a new one
+      if (update.isClosed) {
+        // If candle is closed, it will be added as a new candle
+        console.log('Candle closed, adding new candle');
+      }
+      (this.chart as any).updateData(candleData);
+    } catch (error: any) {
+      console.error('Error updating chart with WebSocket data:', error);
     }
   }
 
