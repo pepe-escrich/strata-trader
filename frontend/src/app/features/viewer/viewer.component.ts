@@ -38,11 +38,6 @@ echarts.use([CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer])
         <div class="slides-scroll" (scroll)="onScroll($event)">
           @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
             <div class="slide" [class.active]="currentIndex() === idx">
-              <!-- Indicador del par actual -->
-              <div class="pair-header" [style.borderColor]="pair.color">
-                <span class="pair-icon">{{ pair.icon }}</span>
-                <span class="pair-name">{{ pair.name }}</span>
-              </div>
 
               <!-- Controles -->
               <div class="controls">
