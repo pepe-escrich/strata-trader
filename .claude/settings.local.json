@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npm run build:dev:*)",
       "Bash(git checkout:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "WebSearch"
     ]
   }
 }
