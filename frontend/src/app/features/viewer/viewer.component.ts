@@ -33,79 +33,85 @@ echarts.use([CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer])
   providers: [BingxMarketService],
   template: `
     <div class="viewer-container">
-      <!-- Controles -->
-      <div class="controls">
-        <div class="control-group">
-          <label>Temporalidad:</label>
-          <div class="button-group">
-            @for (option of timeframeOptions; track option.value) {
-              <button
-                class="control-btn"
-                [class.active]="selectedTimeframe() === option.value"
-                (click)="setTimeframe(option.value)"
-                [disabled]="loading()">
-                {{ option.label }}
-              </button>
-            }
-          </div>
-        </div>
-
-        <div class="control-group">
-          <label>Actualización:</label>
-          <div class="button-group">
-            @for (option of refreshOptions; track option.value) {
-              <button
-                class="control-btn"
-                [class.active]="refreshInterval() === option.value"
-                (click)="setRefreshInterval(option.value)">
-                {{ option.label }}
-              </button>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- Gráfico -->
-      <div class="chart-wrapper">
-        @if (loading()) {
-          <div class="loading">
-            <div class="spinner"></div>
-            <span>Cargando datos...</span>
-          </div>
-        }
-        @if (error()) {
-          <div class="error">
-            <span>❌ {{ error() }}</span>
-            <button class="retry-btn" (click)="loadChartData()">Reintentar</button>
-          </div>
-        }
-
-        <div #chartContainer class="chart-container"></div>
-      </div>
-
-      <!-- Selector de pares con scroll -->
-      @if (pairsService.enabledPairs().length > 1) {
-        <div class="cards-scroll" (scroll)="onScroll($event)">
+      @if (pairsService.enabledPairs().length > 0) {
+        <!-- Contenedor deslizable completo -->
+        <div class="slides-scroll" (scroll)="onScroll($event)">
           @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
             <div class="slide" [class.active]="currentIndex() === idx">
-              <div class="pair-card" [style.borderColor]="pair.color">
+              <!-- Indicador del par actual -->
+              <div class="pair-header" [style.borderColor]="pair.color">
                 <span class="pair-icon">{{ pair.icon }}</span>
                 <span class="pair-name">{{ pair.name }}</span>
+              </div>
+
+              <!-- Controles -->
+              <div class="controls">
+                <div class="control-group">
+                  <label>Temporalidad:</label>
+                  <div class="button-group">
+                    @for (option of timeframeOptions; track option.value) {
+                      <button
+                        class="control-btn"
+                        [class.active]="selectedTimeframe() === option.value"
+                        (click)="setTimeframe(option.value)"
+                        [disabled]="loading()">
+                        {{ option.label }}
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <label>Actualización:</label>
+                  <div class="button-group">
+                    @for (option of refreshOptions; track option.value) {
+                      <button
+                        class="control-btn"
+                        [class.active]="refreshInterval() === option.value"
+                        (click)="setRefreshInterval(option.value)">
+                        {{ option.label }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gráfico -->
+              <div class="chart-wrapper">
+                @if (loading() && currentIndex() === idx) {
+                  <div class="loading">
+                    <div class="spinner"></div>
+                    <span>Cargando datos...</span>
+                  </div>
+                }
+                @if (error() && currentIndex() === idx) {
+                  <div class="error">
+                    <span>❌ {{ error() }}</span>
+                    <button class="retry-btn" (click)="loadChartData()">Reintentar</button>
+                  </div>
+                }
+
+                @if (currentIndex() === idx) {
+                  <div #chartContainer class="chart-container"></div>
+                }
               </div>
             </div>
           }
         </div>
 
-        <div class="pagination-dots">
-          @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
-            <button
-              class="dot"
-              [class.active]="currentIndex() === idx"
-              [style.background]="currentIndex() === idx ? pair.color : '#d1d5db'"
-              (click)="goToSlide(idx)">
-            </button>
-          }
-        </div>
+        <!-- Dots de paginación -->
+        @if (pairsService.enabledPairs().length > 1) {
+          <div class="pagination-dots">
+            @for (pair of pairsService.enabledPairs(); track pair.symbol; let idx = $index) {
+              <button
+                class="dot"
+                [class.active]="currentIndex() === idx"
+                [style.color]="currentIndex() === idx ? pair.color : '#d1d5db'"
+                (click)="goToSlide(idx)">
+              </button>
+            }
+          </div>
+        }
       }
 
       @if (pairsService.enabledPairs().length === 0) {
@@ -122,9 +128,8 @@ echarts.use([CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer])
       display: flex;
       flex-direction: column;
       min-height: 0;
-      padding: 20px;
-      gap: 16px;
-      height: 100%; /* Asegurar que tome toda la altura disponible */
+      height: 100%;
+      overflow: hidden;
     }
 
     .controls {
@@ -286,7 +291,8 @@ echarts.use([CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer])
       }
     }
 
-    .cards-scroll {
+    .slides-scroll {
+      flex: 1;
       display: flex;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
@@ -294,6 +300,7 @@ echarts.use([CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer])
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       width: 100%;
+      min-height: 0;
 
       &::-webkit-scrollbar {
         display: none;
@@ -304,54 +311,80 @@ echarts.use([CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer])
       flex: 0 0 100%;
       scroll-snap-align: start;
       scroll-snap-stop: always;
-      padding: 0 10px;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      padding: 20px;
+      gap: 16px;
+      min-height: 0;
     }
 
-    .pair-card {
+    .pair-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px 20px;
+      gap: 16px;
+      padding: 16px 24px;
       background: white;
-      border: 2px solid #d1d5db;
-      border-radius: 12px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      font-size: 14px;
+      border: 3px solid #d1d5db;
+      border-radius: 16px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      font-size: 16px;
       font-weight: 500;
       transition: all 0.3s;
 
       .pair-icon {
-        font-size: 20px;
+        font-size: 32px;
       }
 
       .pair-name {
         color: #374151;
         font-weight: 600;
+        font-size: 18px;
       }
     }
 
     .pagination-dots {
       display: flex;
       justify-content: center;
-      gap: 8px;
+      gap: 12px;
       margin-top: 12px;
+      padding: 8px 0;
     }
 
     .dot {
-      width: 8px;
-      height: 8px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      background: #d1d5db;
+      background: transparent;
       border: none;
       padding: 0;
       cursor: pointer;
       transition: all 0.3s;
+      touch-action: manipulation;
+      min-width: 32px;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      color: #d1d5db;
+
+      &::before {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: currentColor;
+        transition: all 0.3s;
+      }
 
       &.active {
-        width: 24px;
-        border-radius: 4px;
+        min-width: 48px;
+
+        &::before {
+          width: 32px;
+          border-radius: 6px;
+        }
       }
     }
 
@@ -402,10 +435,22 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       const pairs = this.pairsService.enabledPairs();
       if (pairs.length > 0 && index < pairs.length) {
         this.activePairService.setActivePair(pairs[index]);
-        // Solo cargar datos si el chart ya está inicializado
-        if (this.chartInitialized) {
-          this.loadChartData();
-        }
+        // Reinicializar el gráfico para el nuevo slide
+        setTimeout(() => {
+          if (this.chart) {
+            this.chart.dispose();
+            this.chart = null;
+            this.chartInitialized = false;
+          }
+          if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = null;
+          }
+          this.initChart();
+          if (this.chartInitialized) {
+            this.loadChartData();
+          }
+        }, 50);
       }
     });
   }
@@ -649,7 +694,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
     const pairs = this.pairsService.enabledPairs();
     if (index >= 0 && index < pairs.length) {
       this.currentIndex.set(index);
-      const container = document.querySelector('.cards-scroll');
+      const container = document.querySelector('.slides-scroll');
       if (container) {
         container.scrollTo({
           left: index * container.clientWidth,
