@@ -38,18 +38,48 @@ import {
 
               <!-- Controles -->
               <div class="controls">
-                <div class="control-group">
-                  <label>Temporalidad:</label>
-                  <div class="button-group">
-                    @for (option of timeframeOptions; track option.value) {
-                      <button
-                        class="control-btn"
-                        [class.active]="selectedTimeframe() === option.value"
-                        (click)="setTimeframe(option.value)"
-                        [disabled]="loading()">
-                        {{ option.label }}
-                      </button>
-                    }
+                <div class="control-row">
+                  <div class="control-group">
+                    <label>Temporalidad:</label>
+                    <select
+                      class="timeframe-select"
+                      [value]="selectedTimeframe()"
+                      (change)="setTimeframe($any($event.target).value)"
+                      [disabled]="loading()">
+                      @for (option of timeframeOptions; track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="control-group indicators">
+                    <label>Indicadores:</label>
+                    <div class="indicator-toggles">
+                      <label class="toggle-item">
+                        <input
+                          type="checkbox"
+                          [checked]="rsiEnabled()"
+                          (change)="toggleIndicator('rsi')"
+                          [disabled]="loading()">
+                        <span>RSI</span>
+                      </label>
+                      <label class="toggle-item">
+                        <input
+                          type="checkbox"
+                          [checked]="macdEnabled()"
+                          (change)="toggleIndicator('macd')"
+                          [disabled]="loading()">
+                        <span>MACD</span>
+                      </label>
+                      <label class="toggle-item">
+                        <input
+                          type="checkbox"
+                          [checked]="volumeEnabled()"
+                          (change)="toggleIndicator('volume')"
+                          [disabled]="loading()">
+                        <span>VOL</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -118,6 +148,13 @@ import {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
+    .control-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
     .control-group {
       display: flex;
       flex-direction: column;
@@ -129,17 +166,15 @@ import {
         color: #6b7280;
         text-transform: uppercase;
       }
+
+      &.indicators {
+        flex: 1;
+      }
     }
 
-    .button-group {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .control-btn {
+    .timeframe-select {
       padding: 6px 12px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 500;
       border: 1px solid #d1d5db;
       background: white;
@@ -147,19 +182,62 @@ import {
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s;
+      min-width: 120px;
 
       &:hover:not(:disabled) {
-        background: #f3f4f6;
         border-color: #9ca3af;
       }
 
-      &.active {
-        background: #667eea;
+      &:focus {
+        outline: none;
         border-color: #667eea;
-        color: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
       }
 
       &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    .indicator-toggles {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      user-select: none;
+      margin: 0;
+      padding: 0;
+
+      input[type="checkbox"] {
+        cursor: pointer;
+        width: 14px;
+        height: 14px;
+        margin: 0;
+        accent-color: #667eea;
+      }
+
+      span {
+        font-size: 11px;
+        font-weight: 500;
+        color: #6b7280;
+        margin: 0;
+      }
+
+      &:has(input:checked) {
+        span {
+          color: #667eea;
+        }
+      }
+
+      &:has(input:disabled) {
         opacity: 0.5;
         cursor: not-allowed;
       }
@@ -367,11 +445,17 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   loading = signal(false);
   error = signal<string | null>(null);
 
+  // Indicadores
+  rsiEnabled = signal(true);
+  macdEnabled = signal(false);
+  volumeEnabled = signal(false);
+
   timeframeOptions = TIMEFRAME_OPTIONS;
 
   private charts: Map<number, Chart> = new Map();
   private resizeObservers: Map<number, ResizeObserver> = new Map();
   private wsSubscription: Subscription | null = null;
+  private indicatorIds: Map<number, { rsi?: string; macd?: string; volume?: string }> = new Map();
 
   constructor(
     public pairsService: CryptoPairsService,
@@ -509,8 +593,11 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       chart.setZoomEnabled(true);
       chart.setScrollEnabled(true);
 
-      // Guardar el gráfico en el Map
+      // Guardar el gráfico en el Map primero
       this.charts.set(index, chart);
+
+      // Crear indicadores basados en el estado actual
+      this.applyIndicators(index);
 
       // Responsive resize
       const resizeObserver = new ResizeObserver(() => {
@@ -522,7 +609,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       resizeObserver.observe(container);
       this.resizeObservers.set(index, resizeObserver);
 
-      console.log(`KLineChart initialized for index ${index}`);
+      console.log(`KLineChart initialized for index ${index} with RSI indicator`);
     } catch (error: any) {
       console.error(`Error initializing chart for index ${index}:`, error);
     }
@@ -555,7 +642,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
               high: c.high,
               low: c.low,
               close: c.close,
-              volume: 0, // Opcional, podríamos agregar volumen si está disponible
+              volume: c.volume, // Incluir volumen para indicadores
             }));
 
             try {
@@ -691,6 +778,79 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
           left: index * container.clientWidth,
           behavior: 'smooth'
         });
+      }
+    }
+  }
+
+  toggleIndicator(type: 'rsi' | 'macd' | 'volume'): void {
+    // Toggle el estado
+    if (type === 'rsi') {
+      this.rsiEnabled.update(v => !v);
+    } else if (type === 'macd') {
+      this.macdEnabled.update(v => !v);
+    } else if (type === 'volume') {
+      this.volumeEnabled.update(v => !v);
+    }
+
+    // Aplicar cambios a todos los gráficos existentes
+    this.charts.forEach((_, index) => {
+      this.applyIndicators(index);
+    });
+  }
+
+  private applyIndicators(index: number): void {
+    const chart = this.charts.get(index);
+    if (!chart) return;
+
+    // Inicializar el objeto de IDs si no existe
+    if (!this.indicatorIds.has(index)) {
+      this.indicatorIds.set(index, {});
+    }
+
+    const ids = this.indicatorIds.get(index)!;
+
+    // RSI
+    if (this.rsiEnabled()) {
+      if (!ids.rsi) {
+        // Crear RSI en un panel separado
+        ids.rsi = chart.createIndicator('RSI', true) || undefined;
+        console.log(`RSI created for chart ${index}`);
+      }
+    } else {
+      if (ids.rsi) {
+        chart.removeIndicator(ids.rsi);
+        ids.rsi = undefined;
+        console.log(`RSI removed from chart ${index}`);
+      }
+    }
+
+    // MACD
+    if (this.macdEnabled()) {
+      if (!ids.macd) {
+        // Crear MACD en un panel separado
+        ids.macd = chart.createIndicator('MACD', true) || undefined;
+        console.log(`MACD created for chart ${index}`);
+      }
+    } else {
+      if (ids.macd) {
+        chart.removeIndicator(ids.macd);
+        ids.macd = undefined;
+        console.log(`MACD removed from chart ${index}`);
+      }
+    }
+
+    // Volume
+    if (this.volumeEnabled()) {
+      if (!ids.volume) {
+        // Crear Volumen en un panel separado
+        ids.volume = chart.createIndicator('VOL', true) || undefined;
+        console.log(`Volume created for chart ${index}`);
+      }
+    } else {
+      if (ids.volume) {
+        chart.removeIndicator(ids.volume);
+        ids.volume = undefined;
+        console.log(`Volume removed from chart ${index}`);
       }
     }
   }
