@@ -31,16 +31,18 @@ export class TaapiService {
     exchange: string = 'binance',
   ): Promise<PivotPointsResponse> {
     const url = `${this.baseUrl}/pivotpoints`;
+    // Convertir BTCUSDT a BTC/USDT para taapi.io
+    const formattedSymbol = this.formatSymbol(symbol);
     const params = {
       secret: this.apiKey,
       exchange,
-      symbol,
+      symbol: formattedSymbol,
       interval,
     };
 
     try {
       this.logger.log(
-        `Fetching pivot points for ${symbol} on ${interval} interval`,
+        `Fetching pivot points for ${formattedSymbol} on ${interval} interval`,
       );
 
       const response = await firstValueFrom(
@@ -60,11 +62,22 @@ export class TaapiService {
     }
   }
 
+  private formatSymbol(symbol: string): string {
+    // Convertir BTCUSDT a BTC/USDT
+    // Asumiendo que todos los pares terminan en USDT
+    if (symbol.includes('/')) {
+      return symbol; // Ya tiene el formato correcto
+    }
+    // Insertar "/" antes de USDT
+    return symbol.replace(/USDT$/, '/USDT');
+  }
+
   async getFibonacciRetracement(
     symbol: string,
     interval: string,
     exchange: string = 'binance',
   ): Promise<FibonacciRetracement> {
+    const formattedSymbol = this.formatSymbol(symbol);
     const fibLevels = [
       { level: '0%', percentage: 0, retracement: 0 },
       { level: '23.6%', percentage: 23.6, retracement: 0.236 },
@@ -76,12 +89,12 @@ export class TaapiService {
 
     try {
       this.logger.log(
-        `Fetching fibonacci retracement for ${symbol} on ${interval} interval`,
+        `Fetching fibonacci retracement for ${formattedSymbol} on ${interval} interval`,
       );
 
       // Obtener información base con el nivel 0.618 (golden ratio)
       const baseResponse = await this.fetchFibonacci(
-        symbol,
+        formattedSymbol,
         interval,
         exchange,
         0.618,
@@ -145,16 +158,17 @@ export class TaapiService {
     exchange: string = 'binance',
   ): Promise<IchimokuCloud> {
     const url = `${this.baseUrl}/ichimoku`;
+    const formattedSymbol = this.formatSymbol(symbol);
     const params = {
       secret: this.apiKey,
       exchange,
-      symbol,
+      symbol: formattedSymbol,
       interval,
     };
 
     try {
       this.logger.log(
-        `Fetching Ichimoku Cloud for ${symbol} on ${interval} interval`,
+        `Fetching Ichimoku Cloud for ${formattedSymbol} on ${interval} interval`,
       );
 
       const response = await firstValueFrom(
