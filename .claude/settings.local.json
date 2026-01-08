@@ -6,7 +6,8 @@
       "Bash(npm uninstall:*)",
       "Bash(npm install:*)",
       "WebSearch",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "WebFetch(domain:taapi.io)"
     ]
   }
 }
