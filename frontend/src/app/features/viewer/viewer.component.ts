@@ -5,7 +5,8 @@ import {
   OnDestroy,
   effect,
   ElementRef,
-  ViewChild,
+  ViewChildren,
+  QueryList,
   AfterViewInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -68,9 +69,7 @@ import {
                   </div>
                 }
 
-                @if (currentIndex() === idx) {
-                  <div #chartContainer class="chart-container"></div>
-                }
+                <div #chartContainer class="chart-container"></div>
               </div>
             </div>
           }
@@ -295,30 +294,6 @@ import {
       min-height: 0;
     }
 
-    .pair-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px 24px;
-      background: white;
-      border: 3px solid #d1d5db;
-      border-radius: 16px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-      font-size: 16px;
-      font-weight: 500;
-      transition: all 0.3s;
-
-      .pair-icon {
-        font-size: 32px;
-      }
-
-      .pair-name {
-        color: #374151;
-        font-weight: 600;
-        font-size: 18px;
-      }
-    }
-
     .pagination-dots {
       display: flex;
       justify-content: center;
@@ -385,7 +360,7 @@ import {
   `],
 })
 export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('chartContainer') chartContainer!: ElementRef<HTMLDivElement>;
+  @ViewChildren('chartContainer') chartContainers!: QueryList<ElementRef<HTMLDivElement>>;
 
   currentIndex = signal(0);
   selectedTimeframe = signal<Timeframe>('15m');
@@ -394,9 +369,8 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   timeframeOptions = TIMEFRAME_OPTIONS;
 
-  private chart: Chart | null = null;
-  private resizeObserver: ResizeObserver | null = null;
-  private chartInitialized = false;
+  private charts: Map<number, Chart> = new Map();
+  private resizeObservers: Map<number, ResizeObserver> = new Map();
   private wsSubscription: Subscription | null = null;
 
   constructor(
@@ -411,29 +385,25 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       const pairs = this.pairsService.enabledPairs();
       if (pairs.length > 0 && index < pairs.length) {
         const previousPair = this.activePairService.currentPair();
-        this.activePairService.setActivePair(pairs[index]);
+        const newPair = pairs[index];
+
+        // Solo procesar si realmente cambia el par
+        if (previousPair && previousPair.symbol === newPair.symbol) {
+          return;
+        }
+
+        this.activePairService.setActivePair(newPair);
 
         // Desuscribirse del par anterior
         if (previousPair) {
           this.wsMarketService.unsubscribeFromKline(previousPair.symbol, this.selectedTimeframe());
         }
 
-        // Reinicializar el gráfico para el nuevo slide
+        // Inicializar el gráfico del slide actual si no existe
         setTimeout(() => {
-          if (this.chart && this.chartContainer) {
-            dispose(this.chartContainer.nativeElement);
-            this.chart = null;
-            this.chartInitialized = false;
-          }
-          if (this.resizeObserver) {
-            this.resizeObserver.disconnect();
-            this.resizeObserver = null;
-          }
-          this.initChart();
-          if (this.chartInitialized) {
-            this.loadChartData();
-            this.subscribeToWebSocket();
-          }
+          this.initChartForIndex(index);
+          this.loadChartData();
+          this.subscribeToWebSocket();
         }, 50);
       }
     });
@@ -450,7 +420,8 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     // Usar setTimeout para asegurar que el DOM esté completamente renderizado
     setTimeout(() => {
-      this.initChart();
+      const index = this.currentIndex();
+      this.initChartForIndex(index);
       this.loadChartData();
       this.subscribeToWebSocket();
     }, 100);
@@ -467,21 +438,32 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       this.wsSubscription.unsubscribe();
     }
 
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
-    if (this.chart) {
-      dispose(this.chartContainer.nativeElement);
-    }
+    // Cleanup all resize observers
+    this.resizeObservers.forEach((observer) => observer.disconnect());
+    this.resizeObservers.clear();
+
+    // Cleanup all charts
+    this.chartContainers?.forEach((container, index) => {
+      if (this.charts.has(index)) {
+        dispose(container.nativeElement);
+      }
+    });
+    this.charts.clear();
   }
 
-  private initChart(): void {
-    if (!this.chartContainer) {
-      console.error('chartContainer is not available');
+  private initChartForIndex(index: number): void {
+    // Si ya existe un gráfico para este índice, no hacer nada
+    if (this.charts.has(index)) {
       return;
     }
 
-    const container = this.chartContainer.nativeElement;
+    const containers = this.chartContainers?.toArray();
+    if (!containers || index >= containers.length) {
+      console.error(`Chart container not available for index ${index}`);
+      return;
+    }
+
+    const container = containers[index].nativeElement;
 
     if (container.clientWidth === 0 || container.clientHeight === 0) {
       console.error('Container has no dimensions');
@@ -497,9 +479,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      this.chart = chart;
-
-      // Configurar estilos para las velas con tipo correcto
+      // Configurar estilos para las velas
       chart.setStyles({
         candle: {
           type: CandleType.CandleSolid,
@@ -529,20 +509,22 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       chart.setZoomEnabled(true);
       chart.setScrollEnabled(true);
 
+      // Guardar el gráfico en el Map
+      this.charts.set(index, chart);
+
       // Responsive resize
-      this.resizeObserver = new ResizeObserver(() => {
-        if (this.chart) {
-          this.chart.resize();
+      const resizeObserver = new ResizeObserver(() => {
+        const chart = this.charts.get(index);
+        if (chart) {
+          chart.resize();
         }
       });
-      this.resizeObserver.observe(container);
+      resizeObserver.observe(container);
+      this.resizeObservers.set(index, resizeObserver);
 
-      // Marcar el chart como inicializado
-      this.chartInitialized = true;
-
-      console.log('KLineChart initialized successfully');
+      console.log(`KLineChart initialized for index ${index}`);
     } catch (error: any) {
-      console.error('Error initializing chart:', error);
+      console.error(`Error initializing chart for index ${index}:`, error);
     }
   }
 
@@ -552,7 +534,9 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    if (!this.chartInitialized || !this.chart) {
+    const index = this.currentIndex();
+    const chart = this.charts.get(index);
+    if (!chart) {
       return;
     }
 
@@ -563,7 +547,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
       .getKlines(currentPair.symbol, this.selectedTimeframe(), 500)
       .subscribe({
         next: (candles) => {
-          if (candles.length > 0 && this.chart) {
+          if (candles.length > 0 && chart) {
             // Convertir datos al formato de KLineChart
             const data = candles.map(c => ({
               timestamp: c.time * 1000, // KLineChart espera milliseconds
@@ -576,8 +560,8 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
 
             try {
               // Cargar datos usando API de v9
-              (this.chart as any).applyNewData(data);
-              console.log('Loaded', data.length, 'candles');
+              (chart as any).applyNewData(data);
+              console.log('Loaded', data.length, 'candles for', currentPair.symbol);
             } catch (e: any) {
               console.error('Error loading data into chart:', e);
             }
@@ -661,7 +645,9 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private handleKlineUpdate(update: any): void {
-    if (!this.chart) return;
+    const index = this.currentIndex();
+    const chart = this.charts.get(index);
+    if (!chart) return;
 
     const candleData = {
       timestamp: update.timestamp,
@@ -678,7 +664,7 @@ export class ViewerComponent implements OnInit, AfterViewInit, OnDestroy {
         // If candle is closed, it will be added as a new candle
         console.log('Candle closed, adding new candle');
       }
-      (this.chart as any).updateData(candleData);
+      (chart as any).updateData(candleData);
     } catch (error: any) {
       console.error('Error updating chart with WebSocket data:', error);
     }

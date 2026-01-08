@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
-import * as WebSocket from 'ws';
+import { WebSocket } from 'ws';
 
 interface KlineSubscription {
   symbol: string;
@@ -44,7 +44,25 @@ interface BinanceKlineData {
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:4200', 'http://localhost:3000'],
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      const allowedOrigins = [
+        'http://localhost:4200',
+        'http://localhost:3000',
+      ];
+
+      // Allow requests with no origin
+      if (!origin) return callback(null, true);
+
+      // Check if origin is allowed
+      const isAllowed = allowedOrigins.includes(origin) ||
+                        (process.env.NODE_ENV === 'production' && origin.endsWith('.vercel.app'));
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   },
   namespace: 'market',
@@ -143,7 +161,7 @@ export class MarketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.log(`Binance WebSocket opened for ${streamKey}`);
     });
 
-    ws.on('message', (data: WebSocket.Data) => {
+    ws.on('message', (data: Buffer) => {
       try {
         const message: BinanceKlineData = JSON.parse(data.toString());
 

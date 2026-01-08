@@ -33,8 +33,10 @@ export class WebSocketMarketService implements OnDestroy {
       return;
     }
 
+    // Remove /api suffix from apiUrl for WebSocket connection
     const apiUrl = environment.apiUrl || 'http://localhost:3000';
-    const wsUrl = apiUrl.replace(/^http/, 'ws');
+    const baseUrl = apiUrl.replace(/\/api$/, '');
+    const wsUrl = baseUrl.replace(/^http/, 'ws');
 
     this.socket = io(`${wsUrl}/market`, {
       transports: ['websocket'],
