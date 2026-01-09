@@ -1242,11 +1242,16 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private onFrvpPointerEnd(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
-    if (!this.frvpDrawing || !this.frvpStartPoint) return;
+    if (!this.frvpDrawing || !this.frvpStartPoint) {
+      console.log('⚠️ onFrvpPointerEnd: Not drawing or no start point');
+      return;
+    }
 
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
+
+    console.log('🎯 onFrvpPointerEnd called', { x, y, startPoint: this.frvpStartPoint });
 
     // Check if there was actual dragging (at least 10 pixels in any direction)
     const pixelDistance = Math.sqrt(
@@ -1254,8 +1259,10 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       Math.pow(y - this.frvpStartPoint.y, 2)
     );
 
+    console.log('📏 Pixel distance:', pixelDistance);
+
     if (pixelDistance < 10) {
-      // Just a click, not a drag - don't show error, just cancel
+      console.log('⚠️ Too small drag, canceling');
       this.disableFrvpDrawing();
       return;
     }
@@ -1263,7 +1270,10 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     // Convert to chart values
     const values = this.pixelToChartValues(chart, x, y);
 
+    console.log('📊 End chart values:', values);
+
     if (!values) {
+      console.error('❌ Could not convert end coordinates to chart values');
       this.disableFrvpDrawing();
       return;
     }
@@ -1274,9 +1284,18 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     const highPrice = Math.max(this.frvpStartPoint.price, values.price);
     const lowPrice = Math.min(this.frvpStartPoint.price, values.price);
 
+    console.log('📐 Selection bounds:', {
+      startTime: new Date(startTime).toISOString(),
+      endTime: new Date(endTime).toISOString(),
+      highPrice,
+      lowPrice,
+      timeDiff: endTime - startTime,
+      priceDiff: highPrice - lowPrice
+    });
+
     // Validate selection (must have meaningful range) - reduced thresholds
     if (endTime - startTime < 10000 || highPrice - lowPrice < 0.001) {
-      // Selection too small
+      console.error('❌ Selection too small:', { timeDiff: endTime - startTime, priceDiff: highPrice - lowPrice });
       this.error.set('Selección demasiado pequeña. Dibuja un rectángulo más grande (mínimo 10 segundos y 0.1% de rango de precio).');
       this.disableFrvpDrawing();
       return;
@@ -1290,15 +1309,20 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       lowPrice
     };
 
+    console.log('📤 Sending selection to FRVP component:', selection);
+    console.log('🔍 frvpSelectorComponent exists?', !!this.frvpSelectorComponent);
+
     if (this.frvpSelectorComponent) {
       this.frvpSelectorComponent.setSelection(selection);
+      console.log('✅ Selection sent to FRVP component');
+    } else {
+      console.error('❌ frvpSelectorComponent is null or undefined!');
     }
 
     // Disable drawing mode
     this.disableFrvpDrawing();
 
-    // Keep the selection rectangle visible
-    // (it will be removed when calculation happens or new selection starts)
+    console.log('✅ Drawing mode disabled');
   }
 
   private pixelToChartValues(chart: Chart, x: number, y: number): { timestamp: number; price: number } | null {
