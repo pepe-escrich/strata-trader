@@ -1069,10 +1069,10 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     };
 
-    // Add mouse event listeners
-    container.addEventListener('mousedown', mousedownHandler);
-    container.addEventListener('mousemove', mousemoveHandler);
-    container.addEventListener('mouseup', mouseupHandler);
+    // Add mouse event listeners (with passive: false to allow preventDefault)
+    container.addEventListener('mousedown', mousedownHandler, { passive: false });
+    container.addEventListener('mousemove', mousemoveHandler, { passive: false });
+    container.addEventListener('mouseup', mouseupHandler, { passive: false });
 
     // Add touch event listeners
     container.addEventListener('touchstart', touchstartHandler, { passive: false });
@@ -1135,6 +1135,10 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private onFrvpPointerStart(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
+    // Prevent chart default behavior (panning/zooming)
+    e.preventDefault();
+    e.stopPropagation();
+
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
@@ -1155,6 +1159,10 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private onFrvpPointerMove(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
     if (!this.frvpDrawing || !this.frvpStartPoint) return;
+
+    // Prevent chart default behavior while drawing
+    e.preventDefault();
+    e.stopPropagation();
 
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
@@ -1201,6 +1209,10 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private onFrvpPointerEnd(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
     if (!this.frvpDrawing || !this.frvpStartPoint) return;
+
+    // Prevent chart default behavior
+    e.preventDefault();
+    e.stopPropagation();
 
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
