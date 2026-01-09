@@ -7,7 +7,12 @@
       "Bash(npm install:*)",
       "WebSearch",
       "Bash(tree:*)",
-      "WebFetch(domain:taapi.io)"
+      "WebFetch(domain:taapi.io)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(node -e:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)"
     ]
   }
 }

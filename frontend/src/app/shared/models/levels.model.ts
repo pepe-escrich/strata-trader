@@ -1,4 +1,4 @@
-export type LevelType = 'pivot' | 'fibonacci' | 'ichimoku';
+export type LevelType = 'pivot' | 'fibonacci' | 'ichimoku' | 'frvp' | 'actuales';
 export type LevelInterval = '1m' | '5m' | '15m' | '30m' | '1h' | '2h' | '4h' | '12h' | '1d' | '1w';
 
 export interface PivotPoints {
@@ -62,3 +62,78 @@ export const LEVEL_INTERVAL_OPTIONS: LevelIntervalOption[] = [
   { value: '1d', label: '1d' },
   { value: '1w', label: '1w' },
 ];
+
+export interface SavedLevel {
+  _id: string;
+  symbol: string;
+  price: number;
+  calculationMethod: string;
+  interval: string;
+  type: string;
+  label: string;
+  touchCount: number;
+  strength: number;
+  metadata: {
+    calculatedAt: number;
+    color?: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SaveLevelRequest {
+  symbol: string;
+  price: number;
+  calculationMethod: string;
+  interval: string;
+  type: string;
+  label: string;
+  metadata?: {
+    calculatedAt?: number;
+    color?: string;
+  };
+}
+
+// FRVP interfaces
+export interface VolumeBin {
+  price: number;
+  volume: number;
+  percentage: number;
+}
+
+export interface FrvpLevel {
+  price: number;
+  type: 'poc' | 'vah' | 'val' | 'hvn' | 'lvn';
+  label: string;
+  volume: number;
+  description: string;
+}
+
+export interface FrvpResult {
+  symbol: string;
+  interval: string;
+  range: {
+    startTime: number;
+    endTime: number;
+    highPrice: number;
+    lowPrice: number;
+  };
+  totalVolume: number;
+  bins: VolumeBin[];
+  levels: FrvpLevel[];
+  poc: number;
+  vah: number;
+  val: number;
+  valueAreaVolume: number;
+  timestamp: number;
+}
+
+export interface CalculateFrvpRequest {
+  symbol: string;
+  interval: string;
+  startTime: number;
+  endTime: number;
+  highPrice: number;
+  lowPrice: number;
+  bins: number;
+}
