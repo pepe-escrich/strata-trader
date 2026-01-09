@@ -1038,7 +1038,7 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const container = containers[this.currentIndex()].nativeElement;
 
-    // Create a transparent overlay div that will capture events BEFORE the chart
+    // Create a semi-transparent overlay div that will capture events BEFORE the chart
     const overlay = document.createElement('div');
     overlay.id = 'frvp-drawing-overlay';
     overlay.style.position = 'absolute';
@@ -1046,27 +1046,37 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     overlay.style.left = '0';
     overlay.style.width = '100%';
     overlay.style.height = '100%';
-    overlay.style.zIndex = '9999'; // Above chart
+    overlay.style.zIndex = '99999'; // Very high z-index
     overlay.style.cursor = 'crosshair';
-    overlay.style.backgroundColor = 'transparent';
+    overlay.style.backgroundColor = 'rgba(139, 92, 246, 0.1)'; // Slightly visible purple tint
+    overlay.style.pointerEvents = 'auto'; // Ensure it captures events
 
-    // Position container as relative if not already
-    const originalPosition = container.style.position;
-    if (!originalPosition || originalPosition === 'static') {
-      container.style.position = 'relative';
-    }
+    console.log('🎨 Creating FRVP overlay', {
+      container: container,
+      containerPosition: window.getComputedStyle(container).position
+    });
+
+    // Force container to be positioned
+    container.style.position = 'relative';
 
     container.appendChild(overlay);
 
+    console.log('✅ Overlay appended to container', {
+      overlay: overlay,
+      overlayParent: overlay.parentElement,
+      overlayInDOM: document.contains(overlay)
+    });
+
     // Create mouse event handlers on the overlay
     const mousedownHandler = (e: MouseEvent) => {
-      // Accept any mouse button for now (easier)
+      console.log('🖱️ MOUSEDOWN on overlay', e);
       e.preventDefault();
       e.stopPropagation();
       this.onFrvpPointerStart(e, chart, overlay, e.clientX, e.clientY);
     };
     const mousemoveHandler = (e: MouseEvent) => {
       if (this.frvpDrawing) {
+        console.log('🖱️ MOUSEMOVE on overlay');
         e.preventDefault();
         e.stopPropagation();
         this.onFrvpPointerMove(e, chart, overlay, e.clientX, e.clientY);
@@ -1074,6 +1084,7 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     const mouseupHandler = (e: MouseEvent) => {
       if (this.frvpDrawing) {
+        console.log('🖱️ MOUSEUP on overlay');
         e.preventDefault();
         e.stopPropagation();
         this.onFrvpPointerEnd(e, chart, overlay, e.clientX, e.clientY);
@@ -1110,13 +1121,15 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     // Add event listeners to the overlay (not the chart container)
-    overlay.addEventListener('mousedown', mousedownHandler, { passive: false });
-    overlay.addEventListener('mousemove', mousemoveHandler, { passive: false });
-    overlay.addEventListener('mouseup', mouseupHandler, { passive: false });
+    overlay.addEventListener('mousedown', mousedownHandler, { passive: false, capture: true });
+    overlay.addEventListener('mousemove', mousemoveHandler, { passive: false, capture: true });
+    overlay.addEventListener('mouseup', mouseupHandler, { passive: false, capture: true });
     overlay.addEventListener('contextmenu', contextmenuHandler, { passive: false });
     overlay.addEventListener('touchstart', touchstartHandler, { passive: false });
     overlay.addEventListener('touchmove', touchmoveHandler, { passive: false });
     overlay.addEventListener('touchend', touchendHandler, { passive: false });
+
+    console.log('🎧 Event listeners attached to overlay');
 
     // Store handlers and overlay for cleanup
     this.chartMouseHandlers.set(this.currentIndex(), {
@@ -1175,14 +1188,23 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private onFrvpPointerStart(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
+    console.log('🎯 onFrvpPointerStart called', { clientX, clientY });
+
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
 
+    console.log('📍 Position calculated', { x, y, rect });
+
     // Convert pixel coordinates to chart values
     const values = this.pixelToChartValues(chart, x, y);
 
-    if (!values) return;
+    console.log('📊 Chart values', values);
+
+    if (!values) {
+      console.warn('⚠️ Could not convert to chart values');
+      return;
+    }
 
     this.frvpDrawing = true;
     this.frvpStartPoint = {
@@ -1191,6 +1213,8 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       timestamp: values.timestamp,
       price: values.price
     };
+
+    console.log('✅ Drawing started', this.frvpStartPoint);
   }
 
   private onFrvpPointerMove(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
