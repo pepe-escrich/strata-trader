@@ -1041,10 +1041,34 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     // Set cursor style to crosshair
     container.style.cursor = 'crosshair';
 
-    // Create mouse event handlers
-    const mousedownHandler = (e: MouseEvent) => this.onFrvpPointerStart(e, chart, container, e.clientX, e.clientY);
-    const mousemoveHandler = (e: MouseEvent) => this.onFrvpPointerMove(e, chart, container, e.clientX, e.clientY);
-    const mouseupHandler = (e: MouseEvent) => this.onFrvpPointerEnd(e, chart, container, e.clientX, e.clientY);
+    // Create mouse event handlers - only respond to RIGHT CLICK (button 2)
+    const mousedownHandler = (e: MouseEvent) => {
+      if (e.button === 2) { // Right click only
+        e.preventDefault();
+        e.stopPropagation();
+        this.onFrvpPointerStart(e, chart, container, e.clientX, e.clientY);
+      }
+    };
+    const mousemoveHandler = (e: MouseEvent) => {
+      if (this.frvpDrawing) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.onFrvpPointerMove(e, chart, container, e.clientX, e.clientY);
+      }
+    };
+    const mouseupHandler = (e: MouseEvent) => {
+      if (e.button === 2 && this.frvpDrawing) { // Right click only
+        e.preventDefault();
+        e.stopPropagation();
+        this.onFrvpPointerEnd(e, chart, container, e.clientX, e.clientY);
+      }
+    };
+
+    // Prevent context menu during drawing mode
+    const contextmenuHandler = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
 
     // Create touch event handlers
     const touchstartHandler = (e: TouchEvent) => {
@@ -1073,6 +1097,7 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     container.addEventListener('mousedown', mousedownHandler, { passive: false });
     container.addEventListener('mousemove', mousemoveHandler, { passive: false });
     container.addEventListener('mouseup', mouseupHandler, { passive: false });
+    container.addEventListener('contextmenu', contextmenuHandler, { passive: false });
 
     // Add touch event listeners
     container.addEventListener('touchstart', touchstartHandler, { passive: false });
@@ -1084,6 +1109,7 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       mousedown: mousedownHandler,
       mousemove: mousemoveHandler,
       mouseup: mouseupHandler,
+      contextmenu: contextmenuHandler,
       touchstart: touchstartHandler,
       touchmove: touchmoveHandler,
       touchend: touchendHandler
@@ -1105,6 +1131,9 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       container.removeEventListener('mousedown', handlers.mousedown);
       container.removeEventListener('mousemove', handlers.mousemove);
       container.removeEventListener('mouseup', handlers.mouseup);
+      if (handlers.contextmenu) {
+        container.removeEventListener('contextmenu', handlers.contextmenu);
+      }
 
       // Remove touch event listeners
       if (handlers.touchstart) {
@@ -1135,10 +1164,6 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private onFrvpPointerStart(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
-    // Prevent chart default behavior (panning/zooming)
-    e.preventDefault();
-    e.stopPropagation();
-
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
@@ -1159,10 +1184,6 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private onFrvpPointerMove(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
     if (!this.frvpDrawing || !this.frvpStartPoint) return;
-
-    // Prevent chart default behavior while drawing
-    e.preventDefault();
-    e.stopPropagation();
 
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
@@ -1209,10 +1230,6 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private onFrvpPointerEnd(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
     if (!this.frvpDrawing || !this.frvpStartPoint) return;
-
-    // Prevent chart default behavior
-    e.preventDefault();
-    e.stopPropagation();
 
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;

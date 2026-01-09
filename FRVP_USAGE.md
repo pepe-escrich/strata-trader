@@ -16,13 +16,17 @@ El Fixed Range Volume Profile analiza la distribución del volumen en diferentes
 ### Paso 2: Dibujar el Rango
 1. Click en el botón **"📐 Dibujar Rango"**
 2. El cursor cambiará a una cruz ✛
-3. **Haz click y arrastra** en la gráfica para seleccionar el rango:
+3. **IMPORTANTE**: Usa el **BOTÓN DERECHO del mouse** para dibujar
+4. **Mantén presionado el botón derecho y arrastra** en la gráfica:
    - **Horizontal**: Define el período temporal (ej: últimas 3 horas, 2 días, etc.)
    - **Vertical**: Define el rango de precios a analizar
+5. Suelta el botón derecho para confirmar la selección
 
 **Consejo:** Dibuja un rectángulo que cubra:
 - Temporalmente: El período que quieres analizar
 - Precio: El rango de precios relevante
+
+**Nota**: El botón derecho se usa para evitar conflictos con el pan/zoom normal del gráfico (que usa el botón izquierdo)
 
 ### Paso 3: Ajustar Resolución
 - Usa el **slider de bins** (50-300)
@@ -190,7 +194,9 @@ Bins: 100
 ### No puedo dibujar el rectángulo
 - ✅ Verifica que hiciste click en "📐 Dibujar Rango"
 - ✅ El cursor debe cambiar a cruz ✛
-- ✅ Haz click y ARRASTRA (no solo click)
+- ✅ **Usa el BOTÓN DERECHO del mouse** (no el izquierdo)
+- ✅ Mantén presionado y ARRASTRA (no solo click)
+- ✅ Arrastra al menos 10 píxeles para que se detecte
 
 ### "Selección demasiado pequeña"
 - ✅ Dibuja un rectángulo más grande
