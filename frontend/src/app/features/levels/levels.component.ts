@@ -1176,15 +1176,7 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     // Clear drawing state
     this.frvpDrawing = false;
     this.frvpStartPoint = null;
-
-    // Remove temporary overlay rectangle if exists
-    if (this.frvpOverlayId) {
-      const chart = this.charts.get(this.currentIndex());
-      if (chart) {
-        (chart as any).removeOverlay(this.frvpOverlayId);
-      }
-      this.frvpOverlayId = null;
-    }
+    this.frvpOverlayId = null;
   }
 
   private onFrvpPointerStart(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
@@ -1217,71 +1209,39 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log('✅ Drawing started', this.frvpStartPoint);
   }
 
-  private onFrvpPointerMove(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
+  private onFrvpPointerMove(e: Event, chart: Chart, overlayContainer: HTMLElement, clientX: number, clientY: number): void {
     if (!this.frvpDrawing || !this.frvpStartPoint) return;
 
-    const rect = container.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    const currentX = clientX - overlayContainer.getBoundingClientRect().left;
+    const currentY = clientY - overlayContainer.getBoundingClientRect().top;
 
-    // Convert current position to chart values
-    const values = this.pixelToChartValues(chart, x, y);
-    if (!values) {
-      console.warn('⚠️ MOUSEMOVE: Could not convert to chart values');
-      return;
+    // Draw HTML rectangle directly on the overlay
+    const left = Math.min(this.frvpStartPoint.x, currentX);
+    const top = Math.min(this.frvpStartPoint.y, currentY);
+    const width = Math.abs(currentX - this.frvpStartPoint.x);
+    const height = Math.abs(currentY - this.frvpStartPoint.y);
+
+    // Remove previous rectangle if exists
+    const existingRect = overlayContainer.querySelector('.frvp-draw-rect');
+    if (existingRect) {
+      existingRect.remove();
     }
 
-    // Remove previous temporary rectangle
-    if (this.frvpOverlayId) {
-      (chart as any).removeOverlay(this.frvpOverlayId);
-    }
+    // Create new rectangle div
+    const rectDiv = document.createElement('div');
+    rectDiv.className = 'frvp-draw-rect';
+    rectDiv.style.position = 'absolute';
+    rectDiv.style.left = `${left}px`;
+    rectDiv.style.top = `${top}px`;
+    rectDiv.style.width = `${width}px`;
+    rectDiv.style.height = `${height}px`;
+    rectDiv.style.border = '2px dashed #8b5cf6';
+    rectDiv.style.background = 'rgba(139, 92, 246, 0.2)';
+    rectDiv.style.pointerEvents = 'none';
 
-    // Draw temporary rectangle
-    const startTime = this.frvpStartPoint.timestamp;
-    const endTime = values.timestamp;
-    const highPrice = Math.max(this.frvpStartPoint.price, values.price);
-    const lowPrice = Math.min(this.frvpStartPoint.price, values.price);
+    overlayContainer.appendChild(rectDiv);
 
-    console.log('📦 Drawing rectangle', {
-      startTime: new Date(startTime).toISOString(),
-      endTime: new Date(endTime).toISOString(),
-      highPrice,
-      lowPrice,
-      timeDiff: endTime - startTime,
-      priceDiff: highPrice - lowPrice
-    });
-
-    try {
-      const overlayConfig = {
-        name: 'rect',
-        points: [
-          { timestamp: Math.min(startTime, endTime), value: highPrice },
-          { timestamp: Math.max(startTime, endTime), value: lowPrice }
-        ],
-        styles: {
-          style: 'stroke_fill',
-          color: 'rgba(139, 92, 246, 0.2)',
-          borderColor: '#8b5cf6',
-          borderSize: 2,
-          borderStyle: 'dashed'
-        }
-      };
-
-      console.log('🎨 Creating overlay with config:', overlayConfig);
-
-      const overlay = (chart as any).createOverlay(overlayConfig);
-
-      console.log('📌 Overlay created:', overlay);
-
-      if (overlay && overlay.id) {
-        this.frvpOverlayId = overlay.id;
-        console.log('✅ Overlay ID stored:', this.frvpOverlayId);
-      } else {
-        console.warn('⚠️ Overlay created but no ID returned');
-      }
-    } catch (error) {
-      console.error('❌ Error creating overlay:', error);
-    }
+    console.log('📦 Rectangle drawn', { left, top, width, height });
   }
 
   private onFrvpPointerEnd(e: Event, chart: Chart, container: HTMLElement, clientX: number, clientY: number): void {
