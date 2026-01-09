@@ -1206,6 +1206,18 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     const x = clientX - rect.left;
     const y = clientY - rect.top;
 
+    // Check if there was actual dragging (at least 10 pixels in any direction)
+    const pixelDistance = Math.sqrt(
+      Math.pow(x - this.frvpStartPoint.x, 2) +
+      Math.pow(y - this.frvpStartPoint.y, 2)
+    );
+
+    if (pixelDistance < 10) {
+      // Just a click, not a drag - don't show error, just cancel
+      this.disableFrvpDrawing();
+      return;
+    }
+
     // Convert to chart values
     const values = this.pixelToChartValues(chart, x, y);
 
@@ -1220,10 +1232,10 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     const highPrice = Math.max(this.frvpStartPoint.price, values.price);
     const lowPrice = Math.min(this.frvpStartPoint.price, values.price);
 
-    // Validate selection (must have meaningful range)
-    if (endTime - startTime < 60000 || highPrice - lowPrice < 0.01) {
+    // Validate selection (must have meaningful range) - reduced thresholds
+    if (endTime - startTime < 10000 || highPrice - lowPrice < 0.001) {
       // Selection too small
-      this.error.set('Selección demasiado pequeña. Intenta nuevamente.');
+      this.error.set('Selección demasiado pequeña. Dibuja un rectángulo más grande (mínimo 10 segundos y 0.1% de rango de precio).');
       this.disableFrvpDrawing();
       return;
     }
