@@ -1038,33 +1038,49 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const container = containers[this.currentIndex()].nativeElement;
 
-    // Set cursor style to crosshair
-    container.style.cursor = 'crosshair';
+    // Create a transparent overlay div that will capture events BEFORE the chart
+    const overlay = document.createElement('div');
+    overlay.id = 'frvp-drawing-overlay';
+    overlay.style.position = 'absolute';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.zIndex = '9999'; // Above chart
+    overlay.style.cursor = 'crosshair';
+    overlay.style.backgroundColor = 'transparent';
 
-    // Create mouse event handlers - only respond to RIGHT CLICK (button 2)
+    // Position container as relative if not already
+    const originalPosition = container.style.position;
+    if (!originalPosition || originalPosition === 'static') {
+      container.style.position = 'relative';
+    }
+
+    container.appendChild(overlay);
+
+    // Create mouse event handlers on the overlay
     const mousedownHandler = (e: MouseEvent) => {
-      if (e.button === 2) { // Right click only
-        e.preventDefault();
-        e.stopPropagation();
-        this.onFrvpPointerStart(e, chart, container, e.clientX, e.clientY);
-      }
+      // Accept any mouse button for now (easier)
+      e.preventDefault();
+      e.stopPropagation();
+      this.onFrvpPointerStart(e, chart, overlay, e.clientX, e.clientY);
     };
     const mousemoveHandler = (e: MouseEvent) => {
       if (this.frvpDrawing) {
         e.preventDefault();
         e.stopPropagation();
-        this.onFrvpPointerMove(e, chart, container, e.clientX, e.clientY);
+        this.onFrvpPointerMove(e, chart, overlay, e.clientX, e.clientY);
       }
     };
     const mouseupHandler = (e: MouseEvent) => {
-      if (e.button === 2 && this.frvpDrawing) { // Right click only
+      if (this.frvpDrawing) {
         e.preventDefault();
         e.stopPropagation();
-        this.onFrvpPointerEnd(e, chart, container, e.clientX, e.clientY);
+        this.onFrvpPointerEnd(e, chart, overlay, e.clientX, e.clientY);
       }
     };
 
-    // Prevent context menu during drawing mode
+    // Prevent context menu
     const contextmenuHandler = (e: MouseEvent) => {
       e.preventDefault();
       return false;
@@ -1075,37 +1091,36 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       if (e.touches.length === 1) {
         e.preventDefault();
         const touch = e.touches[0];
-        this.onFrvpPointerStart(e, chart, container, touch.clientX, touch.clientY);
+        this.onFrvpPointerStart(e, chart, overlay, touch.clientX, touch.clientY);
       }
     };
     const touchmoveHandler = (e: TouchEvent) => {
       if (e.touches.length === 1) {
         e.preventDefault();
         const touch = e.touches[0];
-        this.onFrvpPointerMove(e, chart, container, touch.clientX, touch.clientY);
+        this.onFrvpPointerMove(e, chart, overlay, touch.clientX, touch.clientY);
       }
     };
     const touchendHandler = (e: TouchEvent) => {
       if (e.changedTouches.length === 1) {
         e.preventDefault();
         const touch = e.changedTouches[0];
-        this.onFrvpPointerEnd(e, chart, container, touch.clientX, touch.clientY);
+        this.onFrvpPointerEnd(e, chart, overlay, touch.clientX, touch.clientY);
       }
     };
 
-    // Add mouse event listeners (with passive: false to allow preventDefault)
-    container.addEventListener('mousedown', mousedownHandler, { passive: false });
-    container.addEventListener('mousemove', mousemoveHandler, { passive: false });
-    container.addEventListener('mouseup', mouseupHandler, { passive: false });
-    container.addEventListener('contextmenu', contextmenuHandler, { passive: false });
+    // Add event listeners to the overlay (not the chart container)
+    overlay.addEventListener('mousedown', mousedownHandler, { passive: false });
+    overlay.addEventListener('mousemove', mousemoveHandler, { passive: false });
+    overlay.addEventListener('mouseup', mouseupHandler, { passive: false });
+    overlay.addEventListener('contextmenu', contextmenuHandler, { passive: false });
+    overlay.addEventListener('touchstart', touchstartHandler, { passive: false });
+    overlay.addEventListener('touchmove', touchmoveHandler, { passive: false });
+    overlay.addEventListener('touchend', touchendHandler, { passive: false });
 
-    // Add touch event listeners
-    container.addEventListener('touchstart', touchstartHandler, { passive: false });
-    container.addEventListener('touchmove', touchmoveHandler, { passive: false });
-    container.addEventListener('touchend', touchendHandler, { passive: false });
-
-    // Store handlers for cleanup
+    // Store handlers and overlay for cleanup
     this.chartMouseHandlers.set(this.currentIndex(), {
+      overlay,
       mousedown: mousedownHandler,
       mousemove: mousemoveHandler,
       mouseup: mouseupHandler,
@@ -1122,28 +1137,24 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!containers || this.currentIndex() >= containers.length) return;
 
     const container = containers[this.currentIndex()].nativeElement;
-    container.style.cursor = 'default';
 
-    // Remove event listeners
+    // Remove event listeners and overlay
     const handlers: any = this.chartMouseHandlers.get(this.currentIndex());
-    if (handlers) {
-      // Remove mouse event listeners
-      container.removeEventListener('mousedown', handlers.mousedown);
-      container.removeEventListener('mousemove', handlers.mousemove);
-      container.removeEventListener('mouseup', handlers.mouseup);
-      if (handlers.contextmenu) {
-        container.removeEventListener('contextmenu', handlers.contextmenu);
-      }
+    if (handlers && handlers.overlay) {
+      const overlay = handlers.overlay;
 
-      // Remove touch event listeners
-      if (handlers.touchstart) {
-        container.removeEventListener('touchstart', handlers.touchstart);
-      }
-      if (handlers.touchmove) {
-        container.removeEventListener('touchmove', handlers.touchmove);
-      }
-      if (handlers.touchend) {
-        container.removeEventListener('touchend', handlers.touchend);
+      // Remove all event listeners from overlay
+      overlay.removeEventListener('mousedown', handlers.mousedown);
+      overlay.removeEventListener('mousemove', handlers.mousemove);
+      overlay.removeEventListener('mouseup', handlers.mouseup);
+      overlay.removeEventListener('contextmenu', handlers.contextmenu);
+      overlay.removeEventListener('touchstart', handlers.touchstart);
+      overlay.removeEventListener('touchmove', handlers.touchmove);
+      overlay.removeEventListener('touchend', handlers.touchend);
+
+      // Remove overlay from DOM
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
       }
 
       this.chartMouseHandlers.delete(this.currentIndex());
@@ -1153,7 +1164,7 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.frvpDrawing = false;
     this.frvpStartPoint = null;
 
-    // Remove temporary overlay if exists
+    // Remove temporary overlay rectangle if exists
     if (this.frvpOverlayId) {
       const chart = this.charts.get(this.currentIndex());
       if (chart) {

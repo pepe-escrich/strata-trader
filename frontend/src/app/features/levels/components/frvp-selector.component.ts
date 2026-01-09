@@ -28,7 +28,7 @@ export interface FrvpSelection {
           @if (drawingMode) {
             <div class="drawing-instructions">
               <span class="pulse">●</span>
-              <span>🖱️ Usa el BOTÓN DERECHO para dibujar el rectángulo en la gráfica</span>
+              <span>Haz clic y arrastra en la gráfica para dibujar el rectángulo</span>
               <button class="cancel-btn" (click)="cancelDrawing()">Cancelar</button>
             </div>
           }
