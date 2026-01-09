@@ -1069,6 +1069,9 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Create mouse event handlers on the overlay
     const mousedownHandler = (e: MouseEvent) => {
+      // Solo botón izquierdo (button 0)
+      if (e.button !== 0) return;
+
       console.log('🖱️ MOUSEDOWN on overlay', e);
       e.preventDefault();
       e.stopPropagation();
@@ -1083,18 +1086,15 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     };
     const mouseupHandler = (e: MouseEvent) => {
+      // Solo botón izquierdo
+      if (e.button !== 0) return;
+
       if (this.frvpDrawing) {
         console.log('🖱️ MOUSEUP on overlay');
         e.preventDefault();
         e.stopPropagation();
         this.onFrvpPointerEnd(e, chart, overlay, e.clientX, e.clientY);
       }
-    };
-
-    // Prevent context menu
-    const contextmenuHandler = (e: MouseEvent) => {
-      e.preventDefault();
-      return false;
     };
 
     // Create touch event handlers
@@ -1124,7 +1124,6 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     overlay.addEventListener('mousedown', mousedownHandler, { passive: false, capture: true });
     overlay.addEventListener('mousemove', mousemoveHandler, { passive: false, capture: true });
     overlay.addEventListener('mouseup', mouseupHandler, { passive: false, capture: true });
-    overlay.addEventListener('contextmenu', contextmenuHandler, { passive: false });
     overlay.addEventListener('touchstart', touchstartHandler, { passive: false });
     overlay.addEventListener('touchmove', touchmoveHandler, { passive: false });
     overlay.addEventListener('touchend', touchendHandler, { passive: false });
@@ -1137,7 +1136,6 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       mousedown: mousedownHandler,
       mousemove: mousemoveHandler,
       mouseup: mouseupHandler,
-      contextmenu: contextmenuHandler,
       touchstart: touchstartHandler,
       touchmove: touchmoveHandler,
       touchend: touchendHandler
@@ -1160,7 +1158,6 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
       overlay.removeEventListener('mousedown', handlers.mousedown);
       overlay.removeEventListener('mousemove', handlers.mousemove);
       overlay.removeEventListener('mouseup', handlers.mouseup);
-      overlay.removeEventListener('contextmenu', handlers.contextmenu);
       overlay.removeEventListener('touchstart', handlers.touchstart);
       overlay.removeEventListener('touchmove', handlers.touchmove);
       overlay.removeEventListener('touchend', handlers.touchend);
