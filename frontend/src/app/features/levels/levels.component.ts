@@ -1226,7 +1226,10 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Convert current position to chart values
     const values = this.pixelToChartValues(chart, x, y);
-    if (!values) return;
+    if (!values) {
+      console.warn('⚠️ MOUSEMOVE: Could not convert to chart values');
+      return;
+    }
 
     // Remove previous temporary rectangle
     if (this.frvpOverlayId) {
@@ -1239,8 +1242,17 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
     const highPrice = Math.max(this.frvpStartPoint.price, values.price);
     const lowPrice = Math.min(this.frvpStartPoint.price, values.price);
 
+    console.log('📦 Drawing rectangle', {
+      startTime: new Date(startTime).toISOString(),
+      endTime: new Date(endTime).toISOString(),
+      highPrice,
+      lowPrice,
+      timeDiff: endTime - startTime,
+      priceDiff: highPrice - lowPrice
+    });
+
     try {
-      const overlay = (chart as any).createOverlay({
+      const overlayConfig = {
         name: 'rect',
         points: [
           { timestamp: Math.min(startTime, endTime), value: highPrice },
@@ -1253,13 +1265,22 @@ export class LevelsComponent implements OnInit, AfterViewInit, OnDestroy {
           borderSize: 2,
           borderStyle: 'dashed'
         }
-      });
+      };
+
+      console.log('🎨 Creating overlay with config:', overlayConfig);
+
+      const overlay = (chart as any).createOverlay(overlayConfig);
+
+      console.log('📌 Overlay created:', overlay);
 
       if (overlay && overlay.id) {
         this.frvpOverlayId = overlay.id;
+        console.log('✅ Overlay ID stored:', this.frvpOverlayId);
+      } else {
+        console.warn('⚠️ Overlay created but no ID returned');
       }
     } catch (error) {
-      console.error('Error creating overlay:', error);
+      console.error('❌ Error creating overlay:', error);
     }
   }
 
